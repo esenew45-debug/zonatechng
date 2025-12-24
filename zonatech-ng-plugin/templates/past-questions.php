@@ -15,17 +15,50 @@ if (!defined('ABSPATH')) exit;
                 <span>ZonaTech NG</span>
             </div>
             <nav class="zonatech-nav">
-                <a href="<?php echo home_url(); ?>">Home</a>
-                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="active">Past Questions</a>
-                <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>">Scratch Cards</a>
-                <a href="<?php echo home_url('/zonatech-nin-service/'); ?>">NIN Service</a>
+                <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
+                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="active"><i class="fas fa-book-open"></i> Past Questions</a>
+                <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+                <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
                 <?php if (is_user_logged_in()): ?>
-                    <a href="<?php echo home_url('/zonatech-dashboard/'); ?>">Dashboard</a>
+                    <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <?php else: ?>
-                    <a href="<?php echo home_url('/zonatech-login/'); ?>">Login</a>
+                    <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
                 <?php endif; ?>
             </nav>
+            
+            <!-- Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </div>
+        
+        <!-- Mobile Navigation Overlay -->
+        <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+        
+        <!-- Mobile Navigation -->
+        <nav class="mobile-nav" id="mobile-nav">
+            <div class="mobile-nav-header">
+                <div class="zonatech-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>ZonaTech NG</span>
+                </div>
+                <button class="mobile-nav-close" id="mobile-nav-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="active"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <?php if (is_user_logged_in()): ?>
+                <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <?php else: ?>
+                <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="<?php echo home_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
+            <?php endif; ?>
+        </nav>
         
         <!-- Page Header -->
         <div class="section">
@@ -91,7 +124,7 @@ if (!defined('ABSPATH')) exit;
                 </div>
                 <div class="col col-md-12" style="flex: 0 0 auto;">
                     <div class="form-group">
-                        <label>&nbsp;</label>
+                        <label class="text-white">&nbsp;</label>
                         <button id="load-questions-btn" class="btn btn-primary">
                             <i class="fas fa-search"></i> Load Questions
                         </button>
@@ -105,8 +138,8 @@ if (!defined('ABSPATH')) exit;
             <?php if (!is_user_logged_in()): ?>
                 <div class="glass-card text-center" style="padding: 3rem;">
                     <i class="fas fa-user-lock" style="font-size: 3rem; color: var(--zona-purple); margin-bottom: 1rem;"></i>
-                    <h3>Login Required</h3>
-                    <p>Please login or create an account to access past questions.</p>
+                    <h3 class="text-white">Login Required</h3>
+                    <p class="text-muted">Please login or create an account to access past questions.</p>
                     <div class="mt-2">
                         <a href="<?php echo home_url('/zonatech-login/'); ?>" class="btn btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login
@@ -119,8 +152,8 @@ if (!defined('ABSPATH')) exit;
             <?php else: ?>
                 <div class="glass-card text-center" style="padding: 3rem;">
                     <i class="fas fa-book-open" style="font-size: 3rem; color: var(--zona-purple); margin-bottom: 1rem;"></i>
-                    <h3>Select Your Questions</h3>
-                    <p>Choose an exam type, subject, and year to view past questions.</p>
+                    <h3 class="text-white">Select Your Questions</h3>
+                    <p class="text-muted">Choose an exam type, subject, and year to view past questions.</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -136,7 +169,7 @@ if (!defined('ABSPATH')) exit;
                         <i class="fas fa-calendar-alt"></i>
                     </div>
                     <div class="feature-content">
-                        <h4>2010 - Present</h4>
+                        <h4 class="text-white">2010 - Present</h4>
                         <p>Access questions from over 14 years of examinations</p>
                     </div>
                 </div>
@@ -145,7 +178,7 @@ if (!defined('ABSPATH')) exit;
                         <i class="fas fa-clipboard-check"></i>
                     </div>
                     <div class="feature-content">
-                        <h4>Practice Tests</h4>
+                        <h4 class="text-white">Practice Tests</h4>
                         <p>Take timed quizzes and see your score instantly</p>
                     </div>
                 </div>
@@ -154,7 +187,7 @@ if (!defined('ABSPATH')) exit;
                         <i class="fas fa-check-double"></i>
                     </div>
                     <div class="feature-content">
-                        <h4>Corrections</h4>
+                        <h4 class="text-white">Corrections</h4>
                         <p>View detailed explanations for every question</p>
                     </div>
                 </div>
@@ -163,11 +196,71 @@ if (!defined('ABSPATH')) exit;
                         <i class="fas fa-mobile-alt"></i>
                     </div>
                     <div class="feature-content">
-                        <h4>Mobile Friendly</h4>
+                        <h4 class="text-white">Mobile Friendly</h4>
                         <p>Study anywhere on any device</p>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <footer class="zonatech-footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>ZonaTech NG</span>
+                </div>
+                <div class="footer-social">
+                    <a href="https://wa.me/234<?php echo substr(ZONATECH_WHATSAPP_NUMBER, 1); ?>" target="_blank" title="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <a href="mailto:<?php echo ZONATECH_SUPPORT_EMAIL; ?>" title="Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+                <p class="footer-copyright">
+                    © <?php echo date('Y'); ?> ZonaTech NG. All rights reserved.
+                </p>
+            </div>
+        </footer>
     </div>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    // Mobile Navigation
+    var hamburger = $('#hamburger-menu');
+    var mobileNav = $('#mobile-nav');
+    var mobileNavOverlay = $('#mobile-nav-overlay');
+    var mobileNavClose = $('#mobile-nav-close');
+    
+    function openMobileNav() {
+        hamburger.addClass('active');
+        mobileNav.addClass('active');
+        mobileNavOverlay.addClass('active');
+        $('body').css('overflow', 'hidden');
+    }
+    
+    function closeMobileNav() {
+        hamburger.removeClass('active');
+        mobileNav.removeClass('active');
+        mobileNavOverlay.removeClass('active');
+        $('body').css('overflow', '');
+    }
+    
+    hamburger.on('click', function() {
+        if (mobileNav.hasClass('active')) {
+            closeMobileNav();
+        } else {
+            openMobileNav();
+        }
+    });
+    
+    mobileNavClose.on('click', closeMobileNav);
+    mobileNavOverlay.on('click', closeMobileNav);
+    
+    mobileNav.find('a').on('click', function() {
+        closeMobileNav();
+    });
+});
+</script>

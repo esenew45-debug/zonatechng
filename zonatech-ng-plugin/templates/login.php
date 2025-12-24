@@ -8,19 +8,61 @@ if (!defined('ABSPATH')) exit;
 
 <div class="zonatech-container">
     <div class="zonatech-wrapper">
+        <!-- Header -->
+        <div class="zonatech-header glass-effect">
+            <div class="zonatech-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>ZonaTech NG</span>
+            </div>
+            <nav class="zonatech-nav">
+                <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
+                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+                <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Register</a>
+            </nav>
+            
+            <!-- Hamburger Menu -->
+            <div class="hamburger-menu" id="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Overlay -->
+        <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+        
+        <!-- Mobile Navigation -->
+        <nav class="mobile-nav" id="mobile-nav">
+            <div class="mobile-nav-header">
+                <div class="zonatech-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>ZonaTech NG</span>
+                </div>
+                <button class="mobile-nav-close" id="mobile-nav-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <a href="<?php echo home_url('/zonatech-login/'); ?>" class="active"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="<?php echo home_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
+        </nav>
+        
         <div class="auth-card glass-effect">
             <div class="auth-header">
                 <div class="zonatech-logo mb-2">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
                 </div>
-                <h2 class="text-white">Welcome Back</h2>
+                <h2 class="text-white"><i class="fas fa-sign-in-alt"></i> Welcome Back</h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
             
             <form id="zonatech-login-form">
                 <div class="form-group">
-                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                    <label for="email" class="text-white"><i class="fas fa-envelope"></i> Email Address</label>
                     <div class="input-with-icon">
                         <i class="fas fa-envelope input-icon"></i>
                         <input type="email" name="email" id="email" class="form-control form-control-icon" placeholder="Enter your email" required>
@@ -28,7 +70,7 @@ if (!defined('ABSPATH')) exit;
                 </div>
                 
                 <div class="form-group">
-                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <label for="password" class="text-white"><i class="fas fa-lock"></i> Password</label>
                     <div class="input-with-icon">
                         <i class="fas fa-lock input-icon"></i>
                         <input type="password" name="password" id="password" class="form-control form-control-icon" placeholder="Enter your password" required>
@@ -65,7 +107,7 @@ if (!defined('ABSPATH')) exit;
             
             <form id="zonatech-reset-form">
                 <div class="form-group">
-                    <label for="reset-email"><i class="fas fa-envelope"></i> Email Address</label>
+                    <label for="reset-email" class="text-white"><i class="fas fa-envelope"></i> Email Address</label>
                     <div class="input-with-icon">
                         <i class="fas fa-envelope input-icon"></i>
                         <input type="email" name="email" id="reset-email" class="form-control form-control-icon" placeholder="Enter your email" required>
@@ -78,6 +120,15 @@ if (!defined('ABSPATH')) exit;
                 </div>
             </form>
         </div>
+        
+        <!-- Footer -->
+        <footer class="zonatech-footer" style="margin-top: auto;">
+            <div class="footer-content">
+                <p class="footer-copyright">
+                    © <?php echo date('Y'); ?> ZonaTech NG. All rights reserved.
+                </p>
+            </div>
+        </footer>
     </div>
 </div>
 
@@ -92,6 +143,41 @@ jQuery(document).ready(function($) {
     $('#back-to-login').on('click', function() {
         $('#forgot-password-modal').hide();
         $('.auth-card').fadeIn();
+    });
+    
+    // Mobile Navigation
+    var hamburger = $('#hamburger-menu');
+    var mobileNav = $('#mobile-nav');
+    var mobileNavOverlay = $('#mobile-nav-overlay');
+    var mobileNavClose = $('#mobile-nav-close');
+    
+    function openMobileNav() {
+        hamburger.addClass('active');
+        mobileNav.addClass('active');
+        mobileNavOverlay.addClass('active');
+        $('body').css('overflow', 'hidden');
+    }
+    
+    function closeMobileNav() {
+        hamburger.removeClass('active');
+        mobileNav.removeClass('active');
+        mobileNavOverlay.removeClass('active');
+        $('body').css('overflow', '');
+    }
+    
+    hamburger.on('click', function() {
+        if (mobileNav.hasClass('active')) {
+            closeMobileNav();
+        } else {
+            openMobileNav();
+        }
+    });
+    
+    mobileNavClose.on('click', closeMobileNav);
+    mobileNavOverlay.on('click', closeMobileNav);
+    
+    mobileNav.find('a').on('click', function() {
+        closeMobileNav();
     });
 });
 </script>

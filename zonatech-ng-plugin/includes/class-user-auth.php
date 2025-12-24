@@ -20,11 +20,70 @@ class ZonaTech_User_Auth {
     
     private function __construct() {
         add_action('wp_ajax_nopriv_zonatech_register', array($this, 'handle_register'));
+        add_action('wp_ajax_nopriv_zonatech_verify_email', array($this, 'handle_verify_email'));
+        add_action('wp_ajax_nopriv_zonatech_resend_verification', array($this, 'handle_resend_verification'));
         add_action('wp_ajax_nopriv_zonatech_login', array($this, 'handle_login'));
         add_action('wp_ajax_zonatech_logout', array($this, 'handle_logout'));
         add_action('wp_ajax_nopriv_zonatech_reset_password', array($this, 'handle_reset_password'));
         add_action('wp_ajax_zonatech_update_profile', array($this, 'handle_update_profile'));
         add_action('wp_ajax_zonatech_change_password', array($this, 'handle_change_password'));
+    }
+    
+    /**
+     * Generate a 6-digit verification code
+     */
+    private function generate_verification_code() {
+        return str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+    
+    /**
+     * Send verification email
+     */
+    private function send_verification_email($email, $first_name, $code) {
+        $subject = 'Verify Your Email - ZonaTech NG';
+        
+        $message = "Hi $first_name,\n\n";
+        $message .= "Thank you for registering with ZonaTech NG!\n\n";
+        $message .= "Your verification code is:\n\n";
+        $message .= "    $code\n\n";
+        $message .= "Enter this code on the verification page to complete your registration.\n\n";
+        $message .= "This code will expire in 30 minutes.\n\n";
+        $message .= "If you didn't create an account with ZonaTech NG, please ignore this email.\n\n";
+        $message .= "Best regards,\n";
+        $message .= "ZonaTech NG Team\n\n";
+        $message .= "---\n";
+        $message .= "Email: " . ZONATECH_SUPPORT_EMAIL . "\n";
+        $message .= "WhatsApp: " . ZONATECH_WHATSAPP_NUMBER;
+        
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        
+        return wp_mail($email, $subject, $message, $headers);
+    }
+    
+    /**
+     * Send account approved email
+     */
+    private function send_approval_email($email, $first_name) {
+        $subject = 'Account Approved - Welcome to ZonaTech NG!';
+        
+        $message = "Hi $first_name,\n\n";
+        $message .= "Great news! Your ZonaTech NG account has been verified and approved.\n\n";
+        $message .= "You can now log in and access:\n";
+        $message .= "• JAMB, WAEC, and NECO past questions\n";
+        $message .= "• Scratch cards and PINs\n";
+        $message .= "• NIN verification services\n";
+        $message .= "• And much more!\n\n";
+        $message .= "Login here: " . home_url('/zonatech-login/') . "\n\n";
+        $message .= "If you have any questions, feel free to contact us.\n\n";
+        $message .= "Best regards,\n";
+        $message .= "ZonaTech NG Team\n\n";
+        $message .= "---\n";
+        $message .= "Email: " . ZONATECH_SUPPORT_EMAIL . "\n";
+        $message .= "WhatsApp: " . ZONATECH_WHATSAPP_NUMBER;
+        
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        
+        return wp_mail($email, $subject, $message, $headers);
     }
     
     public function handle_register() {
@@ -58,37 +117,190 @@ class ZonaTech_User_Auth {
             wp_send_json_error(array('message' => 'Passwords do not match.'));
         }
         
-        // Create user
-        $username = sanitize_user(strtolower($first_name . $last_name) . wp_rand(100, 999));
+        // Check if there's already a pending verification for this email
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'zonatech_pending_users';
         
-        $user_id = wp_create_user($username, $password, $email);
+        // Create pending users table if not exists
+        $this->create_pending_users_table();
+        
+        // Delete any existing pending registration for this email
+        $wpdb->delete($table_name, array('email' => $email));
+        
+        // Generate verification code
+        $verification_code = $this->generate_verification_code();
+        
+        // Store pending registration
+        $pending_id = $wpdb->insert($table_name, array(
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'email' => $email,
+            'phone' => $phone,
+            'password' => wp_hash_password($password),
+            'verification_code' => $verification_code,
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+30 minutes')),
+            'created_at' => current_time('mysql')
+        ));
+        
+        if (!$pending_id) {
+            wp_send_json_error(array('message' => 'Failed to create registration. Please try again.'));
+        }
+        
+        // Send verification email
+        $email_sent = $this->send_verification_email($email, $first_name, $verification_code);
+        
+        if (!$email_sent) {
+            $wpdb->delete($table_name, array('id' => $wpdb->insert_id));
+            wp_send_json_error(array('message' => 'Failed to send verification email. Please try again.'));
+        }
+        
+        wp_send_json_success(array(
+            'message' => 'Verification code sent to your email!',
+            'pending_user_id' => $wpdb->insert_id
+        ));
+    }
+    
+    public function handle_verify_email() {
+        check_ajax_referer('zonatech_nonce', 'nonce');
+        
+        $pending_user_id = intval($_POST['pending_user_id'] ?? 0);
+        $verification_code = sanitize_text_field($_POST['verification_code'] ?? '');
+        
+        if (empty($pending_user_id) || empty($verification_code)) {
+            wp_send_json_error(array('message' => 'Verification code is required.'));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'zonatech_pending_users';
+        
+        // Get pending registration
+        $pending = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE id = %d AND verification_code = %s",
+            $pending_user_id,
+            $verification_code
+        ));
+        
+        if (!$pending) {
+            wp_send_json_error(array('message' => 'Invalid verification code.'));
+        }
+        
+        // Check if expired
+        if (strtotime($pending->expires_at) < time()) {
+            $wpdb->delete($table_name, array('id' => $pending_user_id));
+            wp_send_json_error(array('message' => 'Verification code has expired. Please register again.'));
+        }
+        
+        // Create the actual user
+        $username = sanitize_user(strtolower($pending->first_name . $pending->last_name) . wp_rand(100, 999));
+        
+        $user_id = wp_insert_user(array(
+            'user_login' => $username,
+            'user_email' => $pending->email,
+            'user_pass' => '', // Empty because we'll set it manually
+            'first_name' => $pending->first_name,
+            'last_name' => $pending->last_name,
+            'display_name' => $pending->first_name . ' ' . $pending->last_name
+        ));
         
         if (is_wp_error($user_id)) {
             wp_send_json_error(array('message' => $user_id->get_error_message()));
         }
         
-        // Update user meta
-        wp_update_user(array(
-            'ID' => $user_id,
-            'first_name' => $first_name,
-            'last_name' => $last_name,
-            'display_name' => $first_name . ' ' . $last_name
-        ));
+        // Set the password directly (it's already hashed)
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->users,
+            array('user_pass' => $pending->password),
+            array('ID' => $user_id)
+        );
         
-        update_user_meta($user_id, 'phone', $phone);
+        // Update user meta
+        update_user_meta($user_id, 'phone', $pending->phone);
         update_user_meta($user_id, 'zonatech_registered', current_time('mysql'));
+        update_user_meta($user_id, 'zonatech_email_verified', true);
+        
+        // Delete pending registration
+        $wpdb->delete($table_name, array('id' => $pending_user_id));
         
         // Log activity
-        ZonaTech_Activity_Log::log($user_id, 'registration', 'User registered successfully');
+        ZonaTech_Activity_Log::log($user_id, 'registration', 'User registered and verified email');
         
-        // Auto login
-        wp_set_current_user($user_id);
-        wp_set_auth_cookie($user_id);
+        // Send approval email
+        $this->send_approval_email($pending->email, $pending->first_name);
         
         wp_send_json_success(array(
-            'message' => 'Registration successful!',
-            'redirect' => home_url('/zonatech-dashboard/')
+            'message' => 'Email verified successfully! You can now log in.',
+            'redirect' => home_url('/zonatech-login/')
         ));
+    }
+    
+    public function handle_resend_verification() {
+        check_ajax_referer('zonatech_nonce', 'nonce');
+        
+        $pending_user_id = intval($_POST['pending_user_id'] ?? 0);
+        
+        if (empty($pending_user_id)) {
+            wp_send_json_error(array('message' => 'Invalid request.'));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'zonatech_pending_users';
+        
+        // Get pending registration
+        $pending = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE id = %d",
+            $pending_user_id
+        ));
+        
+        if (!$pending) {
+            wp_send_json_error(array('message' => 'Registration not found. Please register again.'));
+        }
+        
+        // Generate new verification code
+        $new_code = $this->generate_verification_code();
+        
+        // Update pending registration
+        $wpdb->update($table_name, array(
+            'verification_code' => $new_code,
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+30 minutes'))
+        ), array('id' => $pending_user_id));
+        
+        // Send new verification email
+        $email_sent = $this->send_verification_email($pending->email, $pending->first_name, $new_code);
+        
+        if (!$email_sent) {
+            wp_send_json_error(array('message' => 'Failed to send verification email. Please try again.'));
+        }
+        
+        wp_send_json_success(array(
+            'message' => 'New verification code sent to your email!'
+        ));
+    }
+    
+    /**
+     * Create pending users table
+     */
+    private function create_pending_users_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'zonatech_pending_users';
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            first_name varchar(100) NOT NULL,
+            last_name varchar(100) NOT NULL,
+            email varchar(100) NOT NULL,
+            phone varchar(20) DEFAULT '',
+            password varchar(255) NOT NULL,
+            verification_code varchar(6) NOT NULL,
+            expires_at datetime NOT NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
     }
     
     public function handle_login() {
