@@ -1,0 +1,242 @@
+<?php
+/**
+ * Plugin Name: ZonaTech NG
+ * Plugin URI: https://zonatechng.com
+ * Description: Educational platform for JAMB, WAEC, NECO past questions, NIN services, and scratch card purchases with Paystack integration.
+ * Version: 1.0.0
+ * Author: ZonaTech NG
+ * Author URI: https://zonatechng.com
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: zonatech-ng
+ * Domain Path: /languages
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Plugin Constants
+define('ZONATECH_VERSION', '1.0.0');
+define('ZONATECH_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('ZONATECH_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('ZONATECH_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+// Paystack Configuration
+define('ZONATECH_PAYSTACK_PUBLIC_KEY', get_option('zonatech_paystack_public_key', ''));
+define('ZONATECH_PAYSTACK_SECRET_KEY', get_option('zonatech_paystack_secret_key', ''));
+
+// Support Contact Info
+define('ZONATECH_WHATSAPP_NUMBER', '08035328591');
+define('ZONATECH_SUPPORT_EMAIL', 'henryudonnah524@gmail.com');
+
+// Price Constants (in Naira)
+define('ZONATECH_SUBJECT_PRICE', 5000);
+define('ZONATECH_NIN_SLIP_PRICE', 2000);
+define('ZONATECH_SCRATCH_CARD_PRICE', 5000);
+
+/**
+ * Main Plugin Class
+ */
+class ZonaTech_NG {
+    
+    private static $instance = null;
+    
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    private function __construct() {
+        $this->load_dependencies();
+        $this->init_hooks();
+    }
+    
+    private function load_dependencies() {
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-database.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-user-auth.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-paystack.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-past-questions.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-nin-service.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-scratch-cards.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-quiz-system.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-activity-log.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-ajax-handlers.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-shortcodes.php';
+        require_once ZONATECH_PLUGIN_DIR . 'admin/class-admin.php';
+    }
+    
+    private function init_hooks() {
+        register_activation_hook(__FILE__, array($this, 'activate'));
+        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        
+        add_action('init', array($this, 'init'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('wp_footer', array($this, 'render_support_buttons'));
+        add_action('wp_footer', array($this, 'render_pwa_prompt'));
+        add_action('wp_head', array($this, 'add_pwa_meta'));
+    }
+    
+    public function init() {
+        load_plugin_textdomain('zonatech-ng', false, dirname(ZONATECH_PLUGIN_BASENAME) . '/languages');
+        
+        // Initialize components
+        ZonaTech_User_Auth::get_instance();
+        ZonaTech_Past_Questions::get_instance();
+        ZonaTech_NIN_Service::get_instance();
+        ZonaTech_Scratch_Cards::get_instance();
+        ZonaTech_Quiz_System::get_instance();
+        ZonaTech_Activity_Log::get_instance();
+        ZonaTech_Ajax_Handlers::get_instance();
+        ZonaTech_Shortcodes::get_instance();
+        
+        if (is_admin()) {
+            ZonaTech_Admin::get_instance();
+        }
+    }
+    
+    public function activate() {
+        ZonaTech_Database::create_tables();
+        ZonaTech_Database::seed_sample_data();
+        $this->create_pages();
+        flush_rewrite_rules();
+    }
+    
+    public function deactivate() {
+        flush_rewrite_rules();
+    }
+    
+    private function create_pages() {
+        $pages = array(
+            'zonatech-dashboard' => array(
+                'title' => 'Dashboard',
+                'content' => '[zonatech_dashboard]'
+            ),
+            'zonatech-login' => array(
+                'title' => 'Login',
+                'content' => '[zonatech_login]'
+            ),
+            'zonatech-register' => array(
+                'title' => 'Register',
+                'content' => '[zonatech_register]'
+            ),
+            'zonatech-past-questions' => array(
+                'title' => 'Past Questions',
+                'content' => '[zonatech_past_questions]'
+            ),
+            'zonatech-nin-service' => array(
+                'title' => 'NIN Service',
+                'content' => '[zonatech_nin_service]'
+            ),
+            'zonatech-scratch-cards' => array(
+                'title' => 'Scratch Cards',
+                'content' => '[zonatech_scratch_cards]'
+            ),
+            'zonatech-payment' => array(
+                'title' => 'Payment',
+                'content' => '[zonatech_payment]'
+            )
+        );
+        
+        foreach ($pages as $slug => $page) {
+            if (!get_page_by_path($slug)) {
+                wp_insert_post(array(
+                    'post_title' => $page['title'],
+                    'post_name' => $slug,
+                    'post_content' => $page['content'],
+                    'post_status' => 'publish',
+                    'post_type' => 'page'
+                ));
+            }
+        }
+    }
+    
+    public function enqueue_scripts() {
+        // Styles
+        wp_enqueue_style('zonatech-main', ZONATECH_PLUGIN_URL . 'assets/css/main.css', array(), ZONATECH_VERSION);
+        wp_enqueue_style('zonatech-glassmorphism', ZONATECH_PLUGIN_URL . 'assets/css/glassmorphism.css', array(), ZONATECH_VERSION);
+        wp_enqueue_style('zonatech-animations', ZONATECH_PLUGIN_URL . 'assets/css/animations.css', array(), ZONATECH_VERSION);
+        wp_enqueue_style('zonatech-dashboard', ZONATECH_PLUGIN_URL . 'assets/css/dashboard.css', array(), ZONATECH_VERSION);
+        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', array(), '6.4.0');
+        
+        // Scripts
+        wp_enqueue_script('zonatech-main', ZONATECH_PLUGIN_URL . 'assets/js/main.js', array('jquery'), ZONATECH_VERSION, true);
+        wp_enqueue_script('zonatech-auth', ZONATECH_PLUGIN_URL . 'assets/js/auth.js', array('jquery'), ZONATECH_VERSION, true);
+        wp_enqueue_script('zonatech-quiz', ZONATECH_PLUGIN_URL . 'assets/js/quiz.js', array('jquery'), ZONATECH_VERSION, true);
+        wp_enqueue_script('zonatech-payment', ZONATECH_PLUGIN_URL . 'assets/js/payment.js', array('jquery'), ZONATECH_VERSION, true);
+        wp_enqueue_script('zonatech-pwa', ZONATECH_PLUGIN_URL . 'assets/js/pwa.js', array('jquery'), ZONATECH_VERSION, true);
+        
+        // Paystack
+        wp_enqueue_script('paystack', 'https://js.paystack.co/v1/inline.js', array(), null, true);
+        
+        // Localize scripts
+        wp_localize_script('zonatech-main', 'zonatech_ajax', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('zonatech_nonce'),
+            'paystack_public_key' => ZONATECH_PAYSTACK_PUBLIC_KEY,
+            'subject_price' => ZONATECH_SUBJECT_PRICE,
+            'nin_price' => ZONATECH_NIN_SLIP_PRICE,
+            'scratch_card_price' => ZONATECH_SCRATCH_CARD_PRICE,
+            'whatsapp_number' => ZONATECH_WHATSAPP_NUMBER,
+            'support_email' => ZONATECH_SUPPORT_EMAIL
+        ));
+    }
+    
+    public function add_pwa_meta() {
+        ?>
+        <meta name="theme-color" content="#1a1a2e">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="ZonaTech NG">
+        <link rel="manifest" href="<?php echo ZONATECH_PLUGIN_URL; ?>manifest.json">
+        <link rel="apple-touch-icon" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
+        <?php
+    }
+    
+    public function render_support_buttons() {
+        ?>
+        <div class="zonatech-support-buttons">
+            <a href="https://wa.me/234<?php echo substr(ZONATECH_WHATSAPP_NUMBER, 1); ?>" 
+               target="_blank" 
+               class="zonatech-whatsapp-btn glass-effect"
+               title="Chat on WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="mailto:<?php echo ZONATECH_SUPPORT_EMAIL; ?>" 
+               class="zonatech-email-btn glass-effect"
+               title="Email Support">
+                <i class="fas fa-envelope"></i>
+            </a>
+        </div>
+        <?php
+    }
+    
+    public function render_pwa_prompt() {
+        ?>
+        <div id="zonatech-pwa-prompt" class="zonatech-pwa-prompt glass-effect" style="display: none;">
+            <div class="pwa-prompt-content">
+                <div class="pwa-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <div class="pwa-text">
+                    <h4>Install ZonaTech NG App</h4>
+                    <p>Access past questions offline anytime!</p>
+                </div>
+                <div class="pwa-actions">
+                    <button id="zonatech-pwa-install" class="btn btn-primary btn-sm">Install</button>
+                    <button id="zonatech-pwa-dismiss" class="btn btn-ghost btn-sm">Later</button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+}
+
+// Initialize Plugin
+function zonatech_ng() {
+    return ZonaTech_NG::get_instance();
+}
+
+add_action('plugins_loaded', 'zonatech_ng');
