@@ -26,19 +26,22 @@ if (!defined('ABSPATH')) exit;
         <!-- Page Header -->
         <div class="section">
             <div class="section-header">
-                <h2><i class="fas fa-id-card"></i> NIN Service</h2>
-                <p>Retrieve your NIN number and download your premium NIN slip</p>
+                <h2 class="text-white"><i class="fas fa-id-card"></i> NIN Service</h2>
+                <p class="text-muted">Retrieve your NIN number and download your premium NIN slip</p>
             </div>
         </div>
         
         <!-- NIN Verification -->
         <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
-            <h3><i class="fas fa-search"></i> Verify Your NIN</h3>
+            <h3 class="text-white"><i class="fas fa-search"></i> Verify Your NIN</h3>
             <p class="text-muted">Enter your 11-digit NIN number to verify and download your slip</p>
             
             <div class="form-group">
-                <label for="nin-input">NIN Number</label>
-                <input type="text" id="nin-input" class="form-control" placeholder="Enter your 11-digit NIN" maxlength="11" pattern="\d{11}">
+                <label for="nin-input" class="text-white"><i class="fas fa-id-badge"></i> NIN Number</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-id-badge input-icon"></i>
+                    <input type="text" id="nin-input" class="form-control form-control-icon" placeholder="Enter your 11-digit NIN" maxlength="11" pattern="\d{11}">
+                </div>
             </div>
             
             <button id="verify-nin-btn" class="btn btn-primary btn-lg" style="width: 100%;">
@@ -50,7 +53,7 @@ if (!defined('ABSPATH')) exit;
         
         <!-- Pricing Info -->
         <div class="glass-card mt-3" style="max-width: 600px; margin: 2rem auto;">
-            <h3><i class="fas fa-tag"></i> Service Pricing</h3>
+            <h3 class="text-white"><i class="fas fa-tag"></i> Service Pricing</h3>
             <div class="payment-card">
                 <div class="payment-info">
                     <div class="payment-icon">
@@ -68,7 +71,7 @@ if (!defined('ABSPATH')) exit;
         <!-- Features -->
         <div class="section">
             <div class="section-header">
-                <h2>What You Get</h2>
+                <h2 class="text-white"><i class="fas fa-gift"></i> What You Get</h2>
             </div>
             <div class="cards-grid" style="max-width: 900px; margin: 0 auto;">
                 <div class="feature-card">

@@ -30,8 +30,8 @@ if (!defined('ABSPATH')) exit;
         <!-- Page Header -->
         <div class="section">
             <div class="section-header">
-                <h2>Past Questions</h2>
-                <p>Access JAMB, WAEC, and NECO past questions from 2010 till date. Practice and prepare for your exams!</p>
+                <h2 class="text-white"><i class="fas fa-book-open"></i> Past Questions</h2>
+                <p class="text-muted">Access JAMB, WAEC, and NECO past questions from 2010 till date. Practice and prepare for your exams!</p>
             </div>
             
             <!-- Exam Type Cards -->
@@ -51,33 +51,42 @@ if (!defined('ABSPATH')) exit;
         
         <!-- Filter Section -->
         <div class="glass-card mb-3">
-            <h3><i class="fas fa-filter"></i> Select Questions</h3>
+            <h3 class="text-white"><i class="fas fa-filter"></i> Select Questions</h3>
             <div class="row">
                 <div class="col col-md-12" style="flex: 1; min-width: 200px;">
                     <div class="form-group">
-                        <label for="exam-type-select">Exam Type</label>
-                        <select id="exam-type-select" class="form-control">
-                            <option value="">Select Exam Type</option>
-                            <?php foreach ($exam_types as $type => $exam): ?>
-                                <option value="<?php echo esc_attr($type); ?>"><?php echo esc_html($exam['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label for="exam-type-select" class="text-white"><i class="fas fa-graduation-cap"></i> Exam Type</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-graduation-cap input-icon"></i>
+                            <select id="exam-type-select" class="form-control form-control-icon">
+                                <option value="">Select Exam Type</option>
+                                <?php foreach ($exam_types as $type => $exam): ?>
+                                    <option value="<?php echo esc_attr($type); ?>"><?php echo esc_html($exam['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="col col-md-12" style="flex: 1; min-width: 200px;">
                     <div class="form-group">
-                        <label for="subject-select">Subject</label>
-                        <select id="subject-select" class="form-control">
-                            <option value="">Select Subject</option>
-                        </select>
+                        <label for="subject-select" class="text-white"><i class="fas fa-book"></i> Subject</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-book input-icon"></i>
+                            <select id="subject-select" class="form-control form-control-icon">
+                                <option value="">Select Subject</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="col col-md-12" style="flex: 1; min-width: 150px;">
                     <div class="form-group">
-                        <label for="year-select">Year</label>
-                        <select id="year-select" class="form-control">
-                            <option value="">Select Year</option>
-                        </select>
+                        <label for="year-select" class="text-white"><i class="fas fa-calendar-alt"></i> Year</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-calendar-alt input-icon"></i>
+                            <select id="year-select" class="form-control form-control-icon">
+                                <option value="">Select Year</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="col col-md-12" style="flex: 0 0 auto;">
@@ -119,7 +128,7 @@ if (!defined('ABSPATH')) exit;
         <!-- Features Section -->
         <div class="section">
             <div class="section-header">
-                <h2>Why Choose Our Past Questions?</h2>
+                <h2 class="text-white"><i class="fas fa-star"></i> Why Choose Our Past Questions?</h2>
             </div>
             <div class="cards-grid">
                 <div class="feature-card">

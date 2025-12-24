@@ -26,8 +26,8 @@ if (!defined('ABSPATH')) exit;
         <!-- Page Header -->
         <div class="section">
             <div class="section-header">
-                <h2><i class="fas fa-credit-card"></i> Scratch Cards & PINs</h2>
-                <p>Purchase WAEC, NECO, and JAMB scratch cards and PINs instantly</p>
+                <h2 class="text-white"><i class="fas fa-credit-card"></i> Scratch Cards & PINs</h2>
+                <p class="text-muted">Purchase WAEC, NECO, and JAMB scratch cards and PINs instantly</p>
             </div>
         </div>
         
@@ -51,8 +51,8 @@ if (!defined('ABSPATH')) exit;
         <!-- My Purchased Cards -->
         <div class="section">
             <div class="section-header">
-                <h2><i class="fas fa-ticket-alt"></i> My Purchased Cards</h2>
-                <p>View all the scratch cards and PINs you've purchased</p>
+                <h2 class="text-white"><i class="fas fa-ticket-alt"></i> My Purchased Cards</h2>
+                <p class="text-muted">View all the scratch cards and PINs you've purchased</p>
             </div>
             <div id="user-cards-container">
                 <div class="loading"><div class="spinner"></div></div>
@@ -62,7 +62,7 @@ if (!defined('ABSPATH')) exit;
         <!-- How It Works -->
         <div class="section">
             <div class="section-header">
-                <h2>How It Works</h2>
+                <h2 class="text-white"><i class="fas fa-question-circle"></i> How It Works</h2>
             </div>
             <div class="cards-grid" style="max-width: 900px; margin: 0 auto;">
                 <div class="feature-card">

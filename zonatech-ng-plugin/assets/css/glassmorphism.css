@@ -138,6 +138,7 @@
     margin-bottom: var(--space-sm);
     position: relative;
     z-index: 1;
+    color: var(--zona-white);
 }
 
 .service-card-desc {
@@ -192,11 +193,13 @@
 .feature-content h4 {
     font-size: 0.9rem;
     margin-bottom: var(--space-xs);
+    color: var(--zona-white);
 }
 
 .feature-content p {
     font-size: 0.8rem;
     margin: 0;
+    color: var(--zona-white-muted);
 }
 
 /* Stats Card */
@@ -264,6 +267,7 @@
     font-size: 0.9rem;
     line-height: 1.7;
     margin-bottom: var(--space-md);
+    color: var(--zona-white);
 }
 
 .question-options {
@@ -332,6 +336,7 @@
 .option-text {
     font-size: 0.85rem;
     flex: 1;
+    color: var(--zona-white);
 }
 
 /* Auth Card */
@@ -425,11 +430,13 @@
 .payment-details h4 {
     font-size: 0.9rem;
     margin-bottom: 0.2rem;
+    color: var(--zona-white);
 }
 
 .payment-details p {
     font-size: 0.75rem;
     margin: 0;
+    color: var(--zona-white-muted);
 }
 
 .payment-amount {
@@ -467,17 +474,20 @@
 .result-score .score-value {
     font-size: 2.5rem;
     font-weight: 700;
+    color: var(--zona-white);
 }
 
 .result-score .score-label {
     font-size: 0.8rem;
     opacity: 0.8;
+    color: var(--zona-white);
 }
 
 .result-grade {
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: var(--space-md);
+    color: var(--zona-white);
 }
 
 .result-stats {

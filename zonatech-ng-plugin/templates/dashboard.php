@@ -164,24 +164,36 @@ $stats = $user_data['stats'];
                         
                         <div class="profile-form">
                             <div class="form-group">
-                                <label>First Name</label>
-                                <input type="text" name="first_name" class="form-control" value="<?php echo esc_attr($user['first_name']); ?>" required>
+                                <label class="text-white"><i class="fas fa-user"></i> First Name</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" name="first_name" class="form-control form-control-icon" value="<?php echo esc_attr($user['first_name']); ?>" required>
+                                </div>
                             </div>
                             
                             <div class="form-group">
-                                <label>Last Name</label>
-                                <input type="text" name="last_name" class="form-control" value="<?php echo esc_attr($user['last_name']); ?>" required>
+                                <label class="text-white"><i class="fas fa-user"></i> Last Name</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" name="last_name" class="form-control form-control-icon" value="<?php echo esc_attr($user['last_name']); ?>" required>
+                                </div>
                             </div>
                             
                             <div class="form-group">
-                                <label>Email Address</label>
-                                <input type="email" class="form-control" value="<?php echo esc_attr($user['email']); ?>" disabled>
-                                <small class="text-muted">Email cannot be changed</small>
+                                <label class="text-white"><i class="fas fa-envelope"></i> Email Address</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-envelope input-icon"></i>
+                                    <input type="email" class="form-control form-control-icon" value="<?php echo esc_attr($user['email']); ?>" disabled>
+                                </div>
+                                <small class="text-muted"><i class="fas fa-info-circle"></i> Email cannot be changed</small>
                             </div>
                             
                             <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="tel" name="phone" class="form-control" value="<?php echo esc_attr($user['phone']); ?>">
+                                <label class="text-white"><i class="fas fa-phone"></i> Phone Number</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-phone input-icon"></i>
+                                    <input type="tel" name="phone" class="form-control form-control-icon" value="<?php echo esc_attr($user['phone']); ?>">
+                                </div>
                             </div>
                         </div>
                         
@@ -199,18 +211,27 @@ $stats = $user_data['stats'];
                     <form id="zonatech-change-password-form">
                         <div class="profile-form">
                             <div class="form-group">
-                                <label>Current Password</label>
-                                <input type="password" name="current_password" class="form-control" required>
+                                <label class="text-white"><i class="fas fa-lock"></i> Current Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" name="current_password" class="form-control form-control-icon" required>
+                                </div>
                             </div>
                             
                             <div class="form-group">
-                                <label>New Password</label>
-                                <input type="password" name="new_password" class="form-control" required minlength="6">
+                                <label class="text-white"><i class="fas fa-key"></i> New Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-key input-icon"></i>
+                                    <input type="password" name="new_password" class="form-control form-control-icon" required minlength="6">
+                                </div>
                             </div>
                             
                             <div class="form-group" style="grid-column: span 2;">
-                                <label>Confirm New Password</label>
-                                <input type="password" name="confirm_password" class="form-control" required>
+                                <label class="text-white"><i class="fas fa-check-circle"></i> Confirm New Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-check-circle input-icon"></i>
+                                    <input type="password" name="confirm_password" class="form-control form-control-icon" required>
+                                </div>
                             </div>
                         </div>
                         

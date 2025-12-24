@@ -71,8 +71,8 @@ if (!defined('ABSPATH')) exit;
         <!-- Services Section -->
         <section id="services" class="section">
             <div class="section-header">
-                <h2>Our Services</h2>
-                <p>Everything you need to succeed in your examinations</p>
+                <h2 class="text-white"><i class="fas fa-concierge-bell"></i> Our Services</h2>
+                <p class="text-muted">Everything you need to succeed in your examinations</p>
             </div>
             
             <div class="cards-grid">
@@ -120,8 +120,8 @@ if (!defined('ABSPATH')) exit;
         <!-- Past Questions Section -->
         <section id="past-questions" class="section">
             <div class="section-header">
-                <h2>Past Questions</h2>
-                <p>Comprehensive past questions for all major examinations</p>
+                <h2 class="text-white"><i class="fas fa-book-open"></i> Past Questions</h2>
+                <p class="text-muted">Comprehensive past questions for all major examinations</p>
             </div>
             
             <div class="cards-grid">
@@ -141,7 +141,7 @@ if (!defined('ABSPATH')) exit;
         <!-- Features Section -->
         <section class="section">
             <div class="section-header">
-                <h2>Why Choose ZonaTech NG?</h2>
+                <h2 class="text-white"><i class="fas fa-medal"></i> Why Choose ZonaTech NG?</h2>
             </div>
             
             <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
@@ -210,8 +210,8 @@ if (!defined('ABSPATH')) exit;
         <!-- CTA Section -->
         <section class="section">
             <div class="glass-card glass-effect-purple text-center" style="padding: 3rem;">
-                <h2>Ready to Start Learning?</h2>
-                <p style="max-width: 500px; margin: 0 auto 1.5rem;">
+                <h2 class="text-white"><i class="fas fa-rocket"></i> Ready to Start Learning?</h2>
+                <p class="text-muted" style="max-width: 500px; margin: 0 auto 1.5rem;">
                     Join thousands of students who are preparing for success with ZonaTech NG.
                 </p>
                 <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-primary btn-lg glow">

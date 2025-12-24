@@ -211,6 +211,31 @@
     color: var(--zona-white-muted);
 }
 
+.form-group label i {
+    margin-right: 0.25rem;
+    color: var(--zona-purple-light);
+}
+
+/* Input with Icon */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--zona-purple-light);
+    font-size: 0.9rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.form-control-icon {
+    padding-left: 2.5rem !important;
+}
+
 .form-control {
     width: 100%;
     padding: 0.6rem 0.875rem;
@@ -239,6 +264,10 @@ select.form-control {
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     padding-right: 2rem;
+}
+
+select.form-control.form-control-icon {
+    background-position: right 0.75rem center;
 }
 
 select.form-control option {
@@ -571,6 +600,7 @@ select.form-control option {
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-muted { color: var(--zona-white-muted); }
+.text-white { color: var(--zona-white) !important; }
 .text-purple { color: var(--zona-purple); }
 .text-success { color: var(--zona-success); }
 .text-warning { color: var(--zona-warning); }
@@ -586,6 +616,7 @@ select.form-control option {
 .d-flex { display: flex; }
 .align-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
 .gap-1 { gap: var(--space-sm); }
 .gap-2 { gap: var(--space-md); }
 .gap-3 { gap: var(--space-lg); }
