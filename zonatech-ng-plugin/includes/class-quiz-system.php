@@ -104,13 +104,26 @@ class ZonaTech_Quiz_System {
         global $wpdb;
         $table_questions = $wpdb->prefix . 'zonatech_questions';
         
-        // Get correct answers
+        // Get correct answers - validate all question IDs are integers
         $question_ids = array_keys($answers);
-        $placeholders = implode(',', array_fill(0, count($question_ids), '%d'));
+        $validated_ids = array();
+        
+        foreach ($question_ids as $id) {
+            $int_id = intval($id);
+            if ($int_id > 0) {
+                $validated_ids[] = $int_id;
+            }
+        }
+        
+        if (empty($validated_ids)) {
+            wp_send_json_error(array('message' => 'Invalid question IDs.'));
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($validated_ids), '%d'));
         
         $questions = $wpdb->get_results($wpdb->prepare(
             "SELECT id, correct_answer FROM $table_questions WHERE id IN ($placeholders)",
-            $question_ids
+            $validated_ids
         ), OBJECT_K);
         
         $correct = 0;

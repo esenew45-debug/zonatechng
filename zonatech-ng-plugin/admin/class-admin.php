@@ -22,6 +22,24 @@ class ZonaTech_Admin {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+        add_action('admin_notices', array($this, 'show_setup_notice'));
+    }
+    
+    public function show_setup_notice() {
+        // Only show on ZonaTech pages or when keys are not configured
+        $screen = get_current_screen();
+        
+        if (empty(ZONATECH_PAYSTACK_PUBLIC_KEY) || empty(ZONATECH_PAYSTACK_SECRET_KEY)) {
+            ?>
+            <div class="notice notice-warning is-dismissible">
+                <p>
+                    <strong>ZonaTech NG:</strong> Paystack API keys are not configured. 
+                    Payment functionality will not work until you configure your keys.
+                    <a href="<?php echo admin_url('admin.php?page=zonatech-settings'); ?>">Configure now</a>
+                </p>
+            </div>
+            <?php
+        }
     }
     
     public function add_admin_menu() {

@@ -20,9 +20,9 @@
         
         // Register Service Worker
         registerServiceWorker: function() {
-            if ('serviceWorker' in navigator) {
+            if ('serviceWorker' in navigator && typeof zonatech_ajax !== 'undefined' && zonatech_ajax.sw_url) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register(zonatech_ajax.ajax_url.replace('/wp-admin/admin-ajax.php', '') + '/wp-content/plugins/zonatech-ng-plugin/sw.js')
+                    navigator.serviceWorker.register(zonatech_ajax.sw_url)
                         .then(function(registration) {
                             console.log('ServiceWorker registered:', registration.scope);
                         })

@@ -236,41 +236,62 @@ class ZonaTech_Database {
             )
         );
         
-        // Insert sample questions for each exam type, subject, and year
+        // Insert sample questions using batch inserts for better performance
+        // Only insert a limited set of sample data for demonstration
+        $limited_subjects = array_slice($subjects, 0, 3); // First 3 subjects only
+        $limited_years = array(2022, 2023, 2024); // Last 3 years only
+        
+        $values = array();
+        $placeholders = array();
+        
         foreach ($exam_types as $exam_type) {
-            foreach ($subjects as $subject) {
-                for ($year = 2010; $year <= 2024; $year++) {
+            foreach ($limited_subjects as $subject) {
+                foreach ($limited_years as $year) {
                     foreach ($sample_questions as $question) {
-                        $wpdb->insert($table_questions, array(
-                            'exam_type' => $exam_type,
-                            'subject' => $subject,
-                            'year' => $year,
-                            'question_text' => $question['question_text'],
-                            'option_a' => $question['option_a'],
-                            'option_b' => $question['option_b'],
-                            'option_c' => $question['option_c'],
-                            'option_d' => $question['option_d'],
-                            'correct_answer' => $question['correct_answer'],
-                            'explanation' => $question['explanation']
-                        ));
+                        $values[] = $exam_type;
+                        $values[] = $subject;
+                        $values[] = $year;
+                        $values[] = $question['question_text'];
+                        $values[] = $question['option_a'];
+                        $values[] = $question['option_b'];
+                        $values[] = $question['option_c'];
+                        $values[] = $question['option_d'];
+                        $values[] = $question['correct_answer'];
+                        $values[] = $question['explanation'];
+                        $placeholders[] = "(%s, %s, %d, %s, %s, %s, %s, %s, %s, %s)";
                     }
                 }
             }
         }
         
-        // Seed some sample scratch cards
+        // Batch insert all questions
+        if (!empty($placeholders)) {
+            $sql = "INSERT INTO $table_questions 
+                    (exam_type, subject, year, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation) 
+                    VALUES " . implode(', ', $placeholders);
+            $wpdb->query($wpdb->prepare($sql, $values));
+        }
+        
+        // Seed sample scratch cards with batch insert (reduced to 10 per type)
         $table_cards = $wpdb->prefix . 'zonatech_scratch_cards';
         $card_types = array('waec', 'neco', 'jamb');
         
+        $card_values = array();
+        $card_placeholders = array();
+        
         foreach ($card_types as $card_type) {
-            for ($i = 1; $i <= 100; $i++) {
-                $wpdb->insert($table_cards, array(
-                    'card_type' => $card_type,
-                    'pin' => strtoupper($card_type) . '-' . wp_generate_password(12, false, false),
-                    'serial_number' => strtoupper($card_type) . '-SN-' . wp_generate_password(8, false, false),
-                    'status' => 'available'
-                ));
+            for ($i = 1; $i <= 10; $i++) {
+                $card_values[] = $card_type;
+                $card_values[] = strtoupper($card_type) . '-' . wp_generate_password(12, false, false);
+                $card_values[] = strtoupper($card_type) . '-SN-' . wp_generate_password(8, false, false);
+                $card_values[] = 'available';
+                $card_placeholders[] = "(%s, %s, %s, %s)";
             }
+        }
+        
+        if (!empty($card_placeholders)) {
+            $sql = "INSERT INTO $table_cards (card_type, pin, serial_number, status) VALUES " . implode(', ', $card_placeholders);
+            $wpdb->query($wpdb->prepare($sql, $card_values));
         }
     }
 }

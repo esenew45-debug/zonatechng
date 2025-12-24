@@ -244,18 +244,42 @@ class ZonaTech_Paystack {
     }
     
     public function handle_webhook() {
-        // Verify webhook signature
+        // Get and validate input
         $input = file_get_contents('php://input');
         
+        if (empty($input)) {
+            $this->log_webhook_error('Empty webhook payload');
+            http_response_code(400);
+            exit('Empty payload');
+        }
+        
+        // Verify webhook signature
         if (!$this->verify_webhook_signature($input)) {
+            $this->log_webhook_error('Invalid signature', array(
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ));
             http_response_code(400);
             exit('Invalid signature');
         }
         
+        // Decode and validate JSON
         $event = json_decode($input, true);
         
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->log_webhook_error('Invalid JSON', array('error' => json_last_error_msg()));
+            http_response_code(400);
+            exit('Invalid JSON');
+        }
+        
+        // Validate required fields
+        if (!isset($event['event']) || !isset($event['data']['reference'])) {
+            $this->log_webhook_error('Missing required fields', array('event' => $event));
+            http_response_code(400);
+            exit('Missing required fields');
+        }
+        
         if ($event['event'] === 'charge.success') {
-            $reference = $event['data']['reference'];
+            $reference = sanitize_text_field($event['data']['reference']);
             
             global $wpdb;
             $table_purchases = $wpdb->prefix . 'zonatech_purchases';
@@ -273,6 +297,16 @@ class ZonaTech_Paystack {
                 );
                 
                 $this->process_purchase($purchase);
+                
+                // Log successful webhook
+                if (class_exists('ZonaTech_Activity_Log')) {
+                    ZonaTech_Activity_Log::log(
+                        $purchase->user_id,
+                        'webhook_processed',
+                        'Payment webhook processed successfully',
+                        array('reference' => $reference)
+                    );
+                }
             }
         }
         
@@ -280,8 +314,19 @@ class ZonaTech_Paystack {
         exit('Webhook processed');
     }
     
+    private function log_webhook_error($message, $data = array()) {
+        // Log to WordPress error log
+        error_log('ZonaTech Paystack Webhook Error: ' . $message . ' - ' . wp_json_encode($data));
+    }
+    
     private function verify_webhook_signature($input) {
         if (!isset($_SERVER['HTTP_X_PAYSTACK_SIGNATURE'])) {
+            $this->log_webhook_error('Missing signature header');
+            return false;
+        }
+        
+        if (empty($this->secret_key)) {
+            $this->log_webhook_error('Secret key not configured');
             return false;
         }
         

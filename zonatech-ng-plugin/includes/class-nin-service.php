@@ -143,26 +143,54 @@ class ZonaTech_NIN_Service {
     }
     
     private function simulate_nin_verification($nin) {
-        // In production, integrate with actual NIN verification API
-        // This is a simulation for demo purposes
+        /**
+         * IMPORTANT: This is a SIMULATION for demonstration purposes only.
+         * 
+         * For PRODUCTION use, integrate with one of these official services:
+         * - NIMC Official API (nimc.gov.ng)
+         * - Dojah (dojah.io)
+         * - Prembly/Identitypass (prembly.com)
+         * - Youverify (youverify.co)
+         * 
+         * The simulation below should NOT be used in production as it does not
+         * perform actual NIN verification and could result in invalid data.
+         */
         
-        // Simulate some basic validation
+        // Basic format validation
         if (strlen($nin) !== 11) {
+            return array(
+                'status' => false,
+                'message' => 'Invalid NIN format. NIN must be 11 digits.'
+            );
+        }
+        
+        // Validate all characters are digits
+        if (!ctype_digit($nin)) {
+            return array(
+                'status' => false,
+                'message' => 'Invalid NIN. Only digits are allowed.'
+            );
+        }
+        
+        // Additional basic validation - NIN shouldn't start with 0
+        if ($nin[0] === '0') {
             return array(
                 'status' => false,
                 'message' => 'Invalid NIN format.'
             );
         }
         
-        // Simulate verification response
+        // Simulate verification response (DEMO ONLY)
+        // In production, this would call the actual verification API
         return array(
             'status' => true,
-            'message' => 'NIN verified successfully.',
+            'message' => 'NIN format validated. (Demo Mode - Production requires API integration)',
             'data' => array(
                 'nin' => $nin,
                 'verified' => true,
-                'name' => 'VERIFIED USER',
-                'note' => 'Pay to download premium NIN slip with full details.'
+                'name' => '[DEMO] Verification pending API integration',
+                'note' => 'Pay to download premium NIN slip. Full verification requires production API setup.',
+                'demo_mode' => true
             )
         );
     }

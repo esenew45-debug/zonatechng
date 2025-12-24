@@ -22,9 +22,20 @@ define('ZONATECH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ZONATECH_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ZONATECH_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
-// Paystack Configuration
-define('ZONATECH_PAYSTACK_PUBLIC_KEY', get_option('zonatech_paystack_public_key', ''));
-define('ZONATECH_PAYSTACK_SECRET_KEY', get_option('zonatech_paystack_secret_key', ''));
+// Paystack Configuration - Keys are loaded from options, with validation
+$zonatech_paystack_public = get_option('zonatech_paystack_public_key', '');
+$zonatech_paystack_secret = get_option('zonatech_paystack_secret_key', '');
+
+// Validate key format (basic check)
+if (!empty($zonatech_paystack_public) && strpos($zonatech_paystack_public, 'pk_') !== 0) {
+    $zonatech_paystack_public = ''; // Invalid format
+}
+if (!empty($zonatech_paystack_secret) && strpos($zonatech_paystack_secret, 'sk_') !== 0) {
+    $zonatech_paystack_secret = ''; // Invalid format
+}
+
+define('ZONATECH_PAYSTACK_PUBLIC_KEY', $zonatech_paystack_public);
+define('ZONATECH_PAYSTACK_SECRET_KEY', $zonatech_paystack_secret);
 
 // Support Contact Info
 define('ZONATECH_WHATSAPP_NUMBER', '08035328591');
@@ -176,11 +187,13 @@ class ZonaTech_NG {
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('zonatech_nonce'),
             'paystack_public_key' => ZONATECH_PAYSTACK_PUBLIC_KEY,
+            'paystack_configured' => !empty(ZONATECH_PAYSTACK_PUBLIC_KEY),
             'subject_price' => ZONATECH_SUBJECT_PRICE,
             'nin_price' => ZONATECH_NIN_SLIP_PRICE,
             'scratch_card_price' => ZONATECH_SCRATCH_CARD_PRICE,
             'whatsapp_number' => ZONATECH_WHATSAPP_NUMBER,
-            'support_email' => ZONATECH_SUPPORT_EMAIL
+            'support_email' => ZONATECH_SUPPORT_EMAIL,
+            'sw_url' => ZONATECH_PLUGIN_URL . 'sw.js'
         ));
     }
     
