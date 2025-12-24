@@ -4,16 +4,37 @@
  */
 
 if (!defined('ABSPATH')) exit;
+
+// Check for session expired message
+$session_expired = isset($_GET['session_expired']) && $_GET['session_expired'] == '1';
 ?>
 
 <div class="zonatech-container">
+    <!-- Loading Screen -->
+    <div id="zonatech-loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2>ZonaTech NG</h2>
+            <p>Loading...</p>
+        </div>
+    </div>
+
     <div class="zonatech-wrapper">
+        <!-- Back to Home -->
+        <div class="back-to-home">
+            <a href="<?php echo site_url(); ?>" class="btn btn-ghost btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+        
         <!-- Header -->
         <div class="zonatech-header glass-effect">
-            <div class="zonatech-logo">
+            <a href="<?php echo site_url(); ?>" class="zonatech-logo">
                 <i class="fas fa-graduation-cap"></i>
                 <span>ZonaTech NG</span>
-            </div>
+            </a>
             <nav class="zonatech-nav">
                 <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
                 <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
@@ -34,10 +55,10 @@ if (!defined('ABSPATH')) exit;
         <!-- Mobile Navigation -->
         <nav class="mobile-nav" id="mobile-nav">
             <div class="mobile-nav-header">
-                <div class="zonatech-logo">
+                <a href="<?php echo site_url(); ?>" class="zonatech-logo">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
-                </div>
+                </a>
                 <button class="mobile-nav-close" id="mobile-nav-close">
                     <i class="fas fa-times"></i>
                 </button>
@@ -52,13 +73,19 @@ if (!defined('ABSPATH')) exit;
         
         <div class="auth-card glass-effect">
             <div class="auth-header">
-                <div class="zonatech-logo mb-2">
+                <a href="<?php echo site_url(); ?>" class="zonatech-logo mb-2">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
-                </div>
+                </a>
                 <h2 class="text-white"><i class="fas fa-sign-in-alt"></i> Welcome Back</h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
+            
+            <?php if ($session_expired): ?>
+            <div class="alert alert-warning">
+                <i class="fas fa-clock"></i> Your session has expired due to inactivity. Please log in again.
+            </div>
+            <?php endif; ?>
             
             <form id="zonatech-login-form">
                 <div class="form-group">
@@ -134,6 +161,14 @@ if (!defined('ABSPATH')) exit;
 
 <script>
 jQuery(document).ready(function($) {
+    // Hide loading screen
+    setTimeout(function() {
+        $('#zonatech-loading-screen').addClass('fade-out');
+        setTimeout(function() {
+            $('#zonatech-loading-screen').hide();
+        }, 300);
+    }, 500);
+    
     $('#forgot-password-link').on('click', function(e) {
         e.preventDefault();
         $('.auth-card').hide();

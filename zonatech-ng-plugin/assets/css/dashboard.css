@@ -55,6 +55,14 @@
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--zona-white);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+}
+
+.sidebar-logo:hover {
+    opacity: 0.9;
 }
 
 .sidebar-logo i {

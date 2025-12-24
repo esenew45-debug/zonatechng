@@ -30,6 +30,20 @@ class ZonaTech_Shortcodes {
         add_shortcode('zonatech_homepage', array($this, 'render_homepage'));
     }
     
+    /**
+     * Check if user is logged in, redirect to login if not
+     */
+    private function require_login($redirect_page = '') {
+        if (!is_user_logged_in()) {
+            $redirect_url = site_url('/zonatech-login/');
+            if (!empty($redirect_page)) {
+                $redirect_url .= '?redirect=' . urlencode($redirect_page);
+            }
+            wp_redirect($redirect_url);
+            exit;
+        }
+    }
+    
     public function render_login() {
         if (is_user_logged_in()) {
             wp_redirect(site_url('/zonatech-dashboard/'));
@@ -64,10 +78,7 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_dashboard() {
-        if (!is_user_logged_in()) {
-            wp_redirect(site_url('/zonatech-login/'));
-            exit;
-        }
+        $this->require_login('dashboard');
         
         $user_data = ZonaTech_User_Auth::get_user_dashboard_data();
         
@@ -77,10 +88,11 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_past_questions() {
-        // Allow guest users to view past questions
-        // They will be prompted to register when trying to access content
+        // Require login to view past questions
+        $this->require_login('past-questions');
+        
         $exam_types = ZonaTech_Past_Questions::get_exam_types();
-        $is_guest = !is_user_logged_in();
+        $is_guest = false;
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/past-questions.php';
@@ -88,9 +100,10 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_nin_service() {
-        // Allow guest users to view NIN service page
-        // They will be prompted to register when trying to use the service
-        $is_guest = !is_user_logged_in();
+        // Require login to use NIN service
+        $this->require_login('nin-service');
+        
+        $is_guest = false;
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/nin-service.php';
@@ -98,10 +111,11 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_scratch_cards() {
-        // Allow guest users to view scratch cards page
-        // They will be prompted to register when trying to purchase
+        // Require login to purchase scratch cards
+        $this->require_login('scratch-cards');
+        
         $card_types = ZonaTech_Scratch_Cards::get_card_types();
-        $is_guest = !is_user_logged_in();
+        $is_guest = false;
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/scratch-cards.php';
@@ -109,10 +123,7 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_payment() {
-        if (!is_user_logged_in()) {
-            wp_redirect(site_url('/zonatech-login/?redirect=payment'));
-            exit;
-        }
+        $this->require_login('payment');
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/payment.php';

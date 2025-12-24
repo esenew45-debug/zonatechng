@@ -7,13 +7,33 @@ if (!defined('ABSPATH')) exit;
 ?>
 
 <div class="zonatech-container">
+    <!-- Loading Screen -->
+    <div id="zonatech-loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2>ZonaTech NG</h2>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Welcome Animation Overlay -->
+    <div id="zonatech-welcome-overlay" class="welcome-overlay" style="display: none;">
+        <div class="welcome-content">
+            <i class="fas fa-graduation-cap welcome-icon"></i>
+            <h1>Welcome to ZonaTech NG</h1>
+            <p>Your Gateway to Academic Excellence</p>
+        </div>
+    </div>
+
     <div class="zonatech-wrapper">
         <!-- Header -->
         <div class="zonatech-header glass-effect">
-            <div class="zonatech-logo">
+            <a href="<?php echo site_url(); ?>" class="zonatech-logo">
                 <i class="fas fa-graduation-cap"></i>
                 <span>ZonaTech NG</span>
-            </div>
+            </a>
             <nav class="zonatech-nav">
                 <a href="#services"><i class="fas fa-concierge-bell"></i> Services</a>
                 <a href="#past-questions"><i class="fas fa-book-open"></i> Past Questions</a>
@@ -40,10 +60,10 @@ if (!defined('ABSPATH')) exit;
         <!-- Mobile Navigation -->
         <nav class="mobile-nav" id="mobile-nav">
             <div class="mobile-nav-header">
-                <div class="zonatech-logo">
+                <a href="<?php echo site_url(); ?>" class="zonatech-logo">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
-                </div>
+                </a>
                 <button class="mobile-nav-close" id="mobile-nav-close">
                     <i class="fas fa-times"></i>
                 </button>
@@ -254,13 +274,55 @@ if (!defined('ABSPATH')) exit;
             </div>
         </section>
         
+        <!-- Download App Section -->
+        <section id="download-app" class="section">
+            <div class="download-app-card glass-effect">
+                <div class="download-app-content">
+                    <div class="download-app-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="download-app-text">
+                        <h2 class="text-white"><i class="fas fa-download"></i> Download Our App</h2>
+                        <p class="text-muted">Install the ZonaTech NG web app on your device for offline access to past questions and a better experience.</p>
+                        <div class="download-app-features">
+                            <div class="download-feature">
+                                <i class="fas fa-wifi-slash"></i>
+                                <span>Access offline</span>
+                            </div>
+                            <div class="download-feature">
+                                <i class="fas fa-bolt"></i>
+                                <span>Faster loading</span>
+                            </div>
+                            <div class="download-feature">
+                                <i class="fas fa-bell"></i>
+                                <span>Notifications</span>
+                            </div>
+                            <div class="download-feature">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span>Home screen icon</span>
+                            </div>
+                        </div>
+                        <button id="download-app-btn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-download"></i> Install App Now
+                        </button>
+                        <p class="download-app-note text-muted">
+                            <i class="fas fa-info-circle"></i> Works on Android, iOS, Windows, and Mac
+                        </p>
+                    </div>
+                    <div class="download-app-image">
+                        <img src="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-512.png" alt="ZonaTech NG App">
+                    </div>
+                </div>
+            </div>
+        </section>
+        
         <!-- Footer -->
         <footer class="zonatech-footer">
             <div class="footer-content">
-                <div class="footer-logo">
+                <a href="<?php echo site_url(); ?>" class="footer-logo">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
-                </div>
+                </a>
                 <p class="footer-tagline">Your Gateway to Academic Excellence</p>
                 
                 <div class="footer-links">
@@ -294,6 +356,31 @@ if (!defined('ABSPATH')) exit;
 
 <script>
 jQuery(document).ready(function($) {
+    // Loading screen and welcome animation
+    var loadingScreen = $('#zonatech-loading-screen');
+    var welcomeOverlay = $('#zonatech-welcome-overlay');
+    
+    // Hide loading screen after page loads
+    setTimeout(function() {
+        loadingScreen.addClass('fade-out');
+        setTimeout(function() {
+            loadingScreen.hide();
+            
+            // Show welcome animation for first-time visitors or new sessions
+            if (!sessionStorage.getItem('zonatech_welcomed')) {
+                welcomeOverlay.show().addClass('animate');
+                sessionStorage.setItem('zonatech_welcomed', 'true');
+                
+                setTimeout(function() {
+                    welcomeOverlay.addClass('fade-out');
+                    setTimeout(function() {
+                        welcomeOverlay.hide();
+                    }, 500);
+                }, 2000);
+            }
+        }, 300);
+    }, 1000);
+    
     // Mobile Navigation
     var hamburger = $('#hamburger-menu');
     var mobileNav = $('#mobile-nav');
@@ -328,6 +415,16 @@ jQuery(document).ready(function($) {
     // Close mobile nav when clicking links
     mobileNav.find('a').on('click', function() {
         closeMobileNav();
+    });
+    
+    // Download App button
+    $('#download-app-btn').on('click', function() {
+        if (window.ZonaTechPWA && window.ZonaTechPWA.deferredPrompt) {
+            window.ZonaTechPWA.installApp();
+        } else {
+            // Show manual install instructions
+            alert('To install the app:\n\n• On Chrome: Click the menu (⋮) and select "Install app"\n• On Safari: Tap Share and "Add to Home Screen"\n• On Firefox: Look for the install icon in the address bar');
+        }
     });
 });
 </script>

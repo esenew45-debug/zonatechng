@@ -7,14 +7,32 @@ if (!defined('ABSPATH')) exit;
 ?>
 
 <div class="zonatech-container">
+    <!-- Loading Screen -->
+    <div id="zonatech-loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2>ZonaTech NG</h2>
+            <p>Loading...</p>
+        </div>
+    </div>
+
     <div class="zonatech-wrapper">
+        <!-- Back to Home -->
+        <div class="back-to-home">
+            <a href="<?php echo site_url(); ?>" class="btn btn-ghost btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+        
         <!-- Registration Form -->
         <div class="auth-card glass-effect" id="register-card">
             <div class="auth-header">
-                <div class="zonatech-logo mb-2">
+                <a href="<?php echo site_url(); ?>" class="zonatech-logo mb-2">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
-                </div>
+                </a>
                 <h2 class="text-white"><i class="fas fa-user-plus"></i> Create Account</h2>
                 <p class="text-muted">Join thousands of students preparing for success</p>
             </div>
@@ -101,6 +119,14 @@ if (!defined('ABSPATH')) exit;
 
 <script>
 jQuery(document).ready(function($) {
+    // Hide loading screen
+    setTimeout(function() {
+        $('#zonatech-loading-screen').addClass('fade-out');
+        setTimeout(function() {
+            $('#zonatech-loading-screen').hide();
+        }, 300);
+    }, 500);
+    
     // Handle registration form submission
     $('#zonatech-register-form').on('submit', function(e) {
         e.preventDefault();

@@ -10,14 +10,25 @@ $stats = $user_data['stats'];
 ?>
 
 <div class="zonatech-container">
+    <!-- Loading Screen -->
+    <div id="zonatech-loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2>ZonaTech NG</h2>
+            <p>Loading...</p>
+        </div>
+    </div>
+
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="dashboard-sidebar glass-effect">
             <div class="sidebar-header">
-                <div class="sidebar-logo">
+                <a href="<?php echo site_url(); ?>" class="sidebar-logo">
                     <i class="fas fa-graduation-cap"></i>
                     <span>ZonaTech NG</span>
-                </div>
+                </a>
             </div>
             
             <div class="sidebar-user">
@@ -30,7 +41,11 @@ $stats = $user_data['stats'];
             
             <nav>
                 <ul class="sidebar-nav">
-                    <li><a href="#overview" class="active" data-section="overview"><i class="fas fa-home"></i> Overview</a></li>
+                    <li><a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Back to Home</a></li>
+                    
+                    <li class="nav-divider"></li>
+                    
+                    <li><a href="#overview" class="active" data-section="overview"><i class="fas fa-tachometer-alt"></i> Overview</a></li>
                     <li><a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book"></i> Past Questions</a></li>
                     <li><a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a></li>
                     <li><a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a></li>
@@ -276,6 +291,14 @@ $stats = $user_data['stats'];
 
 <script>
 jQuery(document).ready(function($) {
+    // Hide loading screen
+    setTimeout(function() {
+        $('#zonatech-loading-screen').addClass('fade-out');
+        setTimeout(function() {
+            $('#zonatech-loading-screen').hide();
+        }, 300);
+    }, 500);
+    
     // Section navigation
     $('[data-section]').on('click', function(e) {
         e.preventDefault();

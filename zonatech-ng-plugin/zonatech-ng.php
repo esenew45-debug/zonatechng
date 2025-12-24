@@ -46,6 +46,9 @@ define('ZONATECH_SUBJECT_PRICE', 5000);
 define('ZONATECH_NIN_SLIP_PRICE', 2000);
 define('ZONATECH_SCRATCH_CARD_PRICE', 5000);
 
+// Session timeout (3 days in seconds)
+define('ZONATECH_SESSION_TIMEOUT', 3 * DAY_IN_SECONDS);
+
 /**
  * Main Plugin Class
  */
@@ -84,10 +87,61 @@ class ZonaTech_NG {
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
         
         add_action('init', array($this, 'init'));
+        add_action('init', array($this, 'check_session_timeout'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_footer', array($this, 'render_support_buttons'));
         add_action('wp_footer', array($this, 'render_pwa_prompt'));
         add_action('wp_head', array($this, 'add_pwa_meta'));
+        add_action('wp_head', array($this, 'add_favicon'));
+        add_action('wp_login', array($this, 'update_last_activity'), 10, 2);
+        add_action('wp_loaded', array($this, 'track_user_activity'));
+    }
+    
+    /**
+     * Check session timeout and log out users after 3 days of inactivity
+     */
+    public function check_session_timeout() {
+        if (!is_user_logged_in()) {
+            return;
+        }
+        
+        $user_id = get_current_user_id();
+        $last_activity = get_user_meta($user_id, 'zonatech_last_activity', true);
+        
+        if ($last_activity && (time() - $last_activity) > ZONATECH_SESSION_TIMEOUT) {
+            // Log out the user due to inactivity
+            wp_logout();
+            wp_redirect(site_url('/zonatech-login/?session_expired=1'));
+            exit;
+        }
+    }
+    
+    /**
+     * Track user activity
+     */
+    public function track_user_activity() {
+        if (is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            update_user_meta($user_id, 'zonatech_last_activity', time());
+        }
+    }
+    
+    /**
+     * Update last activity on login
+     */
+    public function update_last_activity($user_login, $user) {
+        update_user_meta($user->ID, 'zonatech_last_activity', time());
+    }
+    
+    /**
+     * Add favicon to site
+     */
+    public function add_favicon() {
+        ?>
+        <link rel="icon" type="image/png" sizes="32x32" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/favicon.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
+        <link rel="shortcut icon" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/favicon.png">
+        <?php
     }
     
     public function init() {
