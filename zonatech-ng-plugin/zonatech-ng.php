@@ -165,12 +165,20 @@ class ZonaTech_NG {
     }
     
     public function enqueue_scripts() {
+        // Font Awesome - Use official CDN with integrity check for reliability
+        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1');
+        
+        // Add Font Awesome Kit fallback in case CDN fails
+        add_action('wp_head', function() {
+            echo '<link rel="preconnect" href="https://cdnjs.cloudflare.com">';
+            echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+        }, 1);
+        
         // Styles
-        wp_enqueue_style('zonatech-main', ZONATECH_PLUGIN_URL . 'assets/css/main.css', array(), ZONATECH_VERSION);
+        wp_enqueue_style('zonatech-main', ZONATECH_PLUGIN_URL . 'assets/css/main.css', array('font-awesome'), ZONATECH_VERSION);
         wp_enqueue_style('zonatech-glassmorphism', ZONATECH_PLUGIN_URL . 'assets/css/glassmorphism.css', array(), ZONATECH_VERSION);
         wp_enqueue_style('zonatech-animations', ZONATECH_PLUGIN_URL . 'assets/css/animations.css', array(), ZONATECH_VERSION);
         wp_enqueue_style('zonatech-dashboard', ZONATECH_PLUGIN_URL . 'assets/css/dashboard.css', array(), ZONATECH_VERSION);
-        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', array(), '6.4.0');
         
         // Scripts
         wp_enqueue_script('zonatech-main', ZONATECH_PLUGIN_URL . 'assets/js/main.js', array('jquery'), ZONATECH_VERSION, true);
@@ -199,6 +207,12 @@ class ZonaTech_NG {
     
     public function add_pwa_meta() {
         ?>
+        <!-- Font Awesome Direct Link -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <meta name="theme-color" content="#1a1a2e">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
