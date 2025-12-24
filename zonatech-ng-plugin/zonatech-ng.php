@@ -128,6 +128,7 @@ class ZonaTech_NG {
             'zonatech-dashboard',
             'zonatech-login',
             'zonatech-register',
+            'zonatech-verify-email',
             'zonatech-past-questions',
             'zonatech-nin-service',
             'zonatech-scratch-cards',
@@ -181,6 +182,10 @@ class ZonaTech_NG {
             'zonatech-register' => array(
                 'title' => 'Register',
                 'content' => '[zonatech_register]'
+            ),
+            'zonatech-verify-email' => array(
+                'title' => 'Verify Email',
+                'content' => '[zonatech_verify_email]'
             ),
             'zonatech-past-questions' => array(
                 'title' => 'Past Questions',

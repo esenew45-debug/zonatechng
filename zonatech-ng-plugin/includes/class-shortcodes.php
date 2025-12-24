@@ -21,6 +21,7 @@ class ZonaTech_Shortcodes {
     private function __construct() {
         add_shortcode('zonatech_login', array($this, 'render_login'));
         add_shortcode('zonatech_register', array($this, 'render_register'));
+        add_shortcode('zonatech_verify_email', array($this, 'render_verify_email'));
         add_shortcode('zonatech_dashboard', array($this, 'render_dashboard'));
         add_shortcode('zonatech_past_questions', array($this, 'render_past_questions'));
         add_shortcode('zonatech_nin_service', array($this, 'render_nin_service'));
@@ -48,6 +49,17 @@ class ZonaTech_Shortcodes {
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/register.php';
+        return ob_get_clean();
+    }
+    
+    public function render_verify_email() {
+        if (is_user_logged_in()) {
+            wp_redirect(site_url('/zonatech-dashboard/'));
+            exit;
+        }
+        
+        ob_start();
+        include ZONATECH_PLUGIN_DIR . 'templates/verify-email.php';
         return ob_get_clean();
     }
     
