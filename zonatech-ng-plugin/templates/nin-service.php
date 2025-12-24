@@ -4,6 +4,7 @@
  */
 
 if (!defined('ABSPATH')) exit;
+$is_guest = !is_user_logged_in();
 ?>
 
 <div class="zonatech-container">
@@ -15,11 +16,16 @@ if (!defined('ABSPATH')) exit;
                 <span>ZonaTech NG</span>
             </div>
             <nav class="zonatech-nav">
-                <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-                <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-                <a href="<?php echo home_url('/zonatech-nin-service/'); ?>" class="active"><i class="fas fa-id-card"></i> NIN Service</a>
-                <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+                <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+                <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+                <a href="<?php echo site_url('/zonatech-nin-service/'); ?>" class="active"><i class="fas fa-id-card"></i> NIN Service</a>
+                <?php if (is_user_logged_in()): ?>
+                    <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <?php else: ?>
+                    <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Register</a>
+                <?php endif; ?>
             </nav>
             
             <!-- Hamburger Menu -->
@@ -44,11 +50,16 @@ if (!defined('ABSPATH')) exit;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>" class="active"><i class="fas fa-id-card"></i> NIN Service</a>
-            <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo site_url('/zonatech-nin-service/'); ?>" class="active"><i class="fas fa-id-card"></i> NIN Service</a>
+            <?php if (is_user_logged_in()): ?>
+                <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <?php else: ?>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Register</a>
+            <?php endif; ?>
         </nav>
         
         <!-- Page Header -->
@@ -59,8 +70,27 @@ if (!defined('ABSPATH')) exit;
             </div>
         </div>
         
+        <?php if ($is_guest): ?>
+        <!-- Guest User Prompt -->
+        <div class="glass-card glass-effect-purple" style="max-width: 600px; margin: 0 auto 2rem; text-align: center;">
+            <div style="width: 80px; height: 80px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.2); border-radius: 50%; font-size: 2rem; color: var(--zona-purple-light);">
+                <i class="fas fa-user-lock"></i>
+            </div>
+            <h3 class="text-white"><i class="fas fa-lock"></i> Login Required</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem;">Create an account or login to verify your NIN and download your premium slip.</p>
+            <div class="d-flex justify-center gap-2" style="flex-wrap: wrap;">
+                <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </a>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>" class="btn btn-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <!-- NIN Verification -->
-        <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+        <div class="glass-card" style="max-width: 600px; margin: 0 auto; <?php echo $is_guest ? 'opacity: 0.6; pointer-events: none;' : ''; ?>">
             <h3 class="text-white"><i class="fas fa-search"></i> Verify Your NIN</h3>
             <p class="text-muted">Enter your 11-digit NIN number to verify and download your slip</p>
             
@@ -68,11 +98,11 @@ if (!defined('ABSPATH')) exit;
                 <label for="nin-input" class="text-white"><i class="fas fa-id-badge"></i> NIN Number</label>
                 <div class="input-with-icon">
                     <i class="fas fa-id-badge input-icon"></i>
-                    <input type="text" id="nin-input" class="form-control form-control-icon" placeholder="Enter your 11-digit NIN" maxlength="11" pattern="\d{11}">
+                    <input type="text" id="nin-input" class="form-control form-control-icon" placeholder="Enter your 11-digit NIN" maxlength="11" pattern="\d{11}" <?php echo $is_guest ? 'disabled' : ''; ?>>
                 </div>
             </div>
             
-            <button id="verify-nin-btn" class="btn btn-primary btn-lg" style="width: 100%;">
+            <button id="verify-nin-btn" class="btn btn-primary btn-lg" style="width: 100%;" <?php echo $is_guest ? 'disabled' : ''; ?>>
                 <i class="fas fa-search"></i> Verify NIN
             </button>
             

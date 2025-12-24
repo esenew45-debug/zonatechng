@@ -31,7 +31,7 @@ class ZonaTech_Shortcodes {
     
     public function render_login() {
         if (is_user_logged_in()) {
-            wp_redirect(home_url('/zonatech-dashboard/'));
+            wp_redirect(site_url('/zonatech-dashboard/'));
             exit;
         }
         
@@ -42,7 +42,7 @@ class ZonaTech_Shortcodes {
     
     public function render_register() {
         if (is_user_logged_in()) {
-            wp_redirect(home_url('/zonatech-dashboard/'));
+            wp_redirect(site_url('/zonatech-dashboard/'));
             exit;
         }
         
@@ -53,7 +53,7 @@ class ZonaTech_Shortcodes {
     
     public function render_dashboard() {
         if (!is_user_logged_in()) {
-            wp_redirect(home_url('/zonatech-login/'));
+            wp_redirect(site_url('/zonatech-login/'));
             exit;
         }
         
@@ -65,7 +65,10 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_past_questions() {
+        // Allow guest users to view past questions
+        // They will be prompted to register when trying to access content
         $exam_types = ZonaTech_Past_Questions::get_exam_types();
+        $is_guest = !is_user_logged_in();
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/past-questions.php';
@@ -73,10 +76,9 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_nin_service() {
-        if (!is_user_logged_in()) {
-            wp_redirect(home_url('/zonatech-login/'));
-            exit;
-        }
+        // Allow guest users to view NIN service page
+        // They will be prompted to register when trying to use the service
+        $is_guest = !is_user_logged_in();
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/nin-service.php';
@@ -84,12 +86,10 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_scratch_cards() {
-        if (!is_user_logged_in()) {
-            wp_redirect(home_url('/zonatech-login/'));
-            exit;
-        }
-        
+        // Allow guest users to view scratch cards page
+        // They will be prompted to register when trying to purchase
         $card_types = ZonaTech_Scratch_Cards::get_card_types();
+        $is_guest = !is_user_logged_in();
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/scratch-cards.php';
@@ -98,7 +98,7 @@ class ZonaTech_Shortcodes {
     
     public function render_payment() {
         if (!is_user_logged_in()) {
-            wp_redirect(home_url('/zonatech-login/'));
+            wp_redirect(site_url('/zonatech-login/?redirect=payment'));
             exit;
         }
         

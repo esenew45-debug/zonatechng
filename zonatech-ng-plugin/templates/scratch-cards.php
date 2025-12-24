@@ -4,6 +4,7 @@
  */
 
 if (!defined('ABSPATH')) exit;
+$is_guest = !is_user_logged_in();
 ?>
 
 <div class="zonatech-container">
@@ -15,11 +16,16 @@ if (!defined('ABSPATH')) exit;
                 <span>ZonaTech NG</span>
             </div>
             <nav class="zonatech-nav">
-                <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-                <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>" class="active"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-                <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
-                <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+                <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+                <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>" class="active"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+                <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+                <?php if (is_user_logged_in()): ?>
+                    <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <?php else: ?>
+                    <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Register</a>
+                <?php endif; ?>
             </nav>
             
             <!-- Hamburger Menu -->
@@ -44,11 +50,16 @@ if (!defined('ABSPATH')) exit;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>" class="active"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
-            <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>" class="active"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <?php if (is_user_logged_in()): ?>
+                <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <?php else: ?>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Register</a>
+            <?php endif; ?>
         </nav>
         
         <!-- Page Header -->
@@ -58,6 +69,25 @@ if (!defined('ABSPATH')) exit;
                 <p class="text-muted">Purchase WAEC, NECO, and JAMB scratch cards and PINs instantly</p>
             </div>
         </div>
+        
+        <?php if ($is_guest): ?>
+        <!-- Guest User Prompt -->
+        <div class="glass-card glass-effect-purple" style="max-width: 600px; margin: 0 auto 2rem; text-align: center;">
+            <div style="width: 80px; height: 80px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.2); border-radius: 50%; font-size: 2rem; color: var(--zona-purple-light);">
+                <i class="fas fa-user-lock"></i>
+            </div>
+            <h3 class="text-white"><i class="fas fa-lock"></i> Login Required to Purchase</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem;">Create an account or login to purchase scratch cards and PINs.</p>
+            <div class="d-flex justify-center gap-2" style="flex-wrap: wrap;">
+                <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </a>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>" class="btn btn-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <!-- Card Types -->
         <div class="cards-grid mb-3">
@@ -69,13 +99,20 @@ if (!defined('ABSPATH')) exit;
                     <h3 class="service-card-title"><?php echo esc_html($card['full_name']); ?></h3>
                     <p class="service-card-desc"><?php echo esc_html($card['description']); ?></p>
                     <p class="service-card-price">₦<?php echo number_format($card['price']); ?></p>
-                    <button class="btn btn-primary buy-scratch-card-btn" data-card-type="<?php echo esc_attr($type); ?>">
-                        <i class="fas fa-shopping-cart"></i> Buy Now
-                    </button>
+                    <?php if ($is_guest): ?>
+                        <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Register to Buy
+                        </a>
+                    <?php else: ?>
+                        <button class="btn btn-primary buy-scratch-card-btn" data-card-type="<?php echo esc_attr($type); ?>">
+                            <i class="fas fa-shopping-cart"></i> Buy Now
+                        </button>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
         
+        <?php if (!$is_guest): ?>
         <!-- My Purchased Cards -->
         <div class="section">
             <div class="section-header">
@@ -86,6 +123,7 @@ if (!defined('ABSPATH')) exit;
                 <div class="loading"><div class="spinner"></div></div>
             </div>
         </div>
+        <?php endif; ?>
         
         <!-- How It Works -->
         <div class="section">

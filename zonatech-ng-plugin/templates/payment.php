@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) exit;
                 <!-- Payment details will be injected here by JavaScript -->
             </div>
             
-            <a href="<?php echo home_url('/zonatech-dashboard/'); ?>" class="btn btn-secondary">
+            <a href="<?php echo site_url('/zonatech-dashboard/'); ?>" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>

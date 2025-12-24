@@ -31,9 +31,9 @@ $stats = $user_data['stats'];
             <nav>
                 <ul class="sidebar-nav">
                     <li><a href="#overview" class="active" data-section="overview"><i class="fas fa-home"></i> Overview</a></li>
-                    <li><a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book"></i> Past Questions</a></li>
-                    <li><a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a></li>
-                    <li><a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a></li>
+                    <li><a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book"></i> Past Questions</a></li>
+                    <li><a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a></li>
+                    <li><a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a></li>
                     
                     <li class="nav-divider"></li>
                     
@@ -115,15 +115,15 @@ $stats = $user_data['stats'];
                         <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
                     </div>
                     <div class="quick-actions">
-                        <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="quick-action-btn">
+                        <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="quick-action-btn">
                             <i class="fas fa-book-open"></i>
                             <span>Past Questions</span>
                         </a>
-                        <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>" class="quick-action-btn">
+                        <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>" class="quick-action-btn">
                             <i class="fas fa-credit-card"></i>
                             <span>Buy Scratch Card</span>
                         </a>
-                        <a href="<?php echo home_url('/zonatech-nin-service/'); ?>" class="quick-action-btn">
+                        <a href="<?php echo site_url('/zonatech-nin-service/'); ?>" class="quick-action-btn">
                             <i class="fas fa-id-card"></i>
                             <span>NIN Service</span>
                         </a>

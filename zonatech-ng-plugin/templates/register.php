@@ -93,7 +93,7 @@ if (!defined('ABSPATH')) exit;
             
             <p class="text-center text-muted" style="font-size: 0.85rem;">
                 Already have an account? 
-                <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Sign in</a>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Sign in</a>
             </p>
         </div>
         
@@ -157,7 +157,7 @@ if (!defined('ABSPATH')) exit;
                 <p class="text-muted">Your email has been verified successfully. You can now login to your account.</p>
             </div>
             
-            <a href="<?php echo home_url('/zonatech-login/'); ?>" class="btn btn-primary btn-lg" style="width: 100%;">
+            <a href="<?php echo site_url('/zonatech-login/'); ?>" class="btn btn-primary btn-lg" style="width: 100%;">
                 <i class="fas fa-sign-in-alt"></i> <span>Login Now</span>
             </a>
         </div>

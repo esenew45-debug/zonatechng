@@ -15,9 +15,9 @@ if (!defined('ABSPATH')) exit;
                 <span>ZonaTech NG</span>
             </div>
             <nav class="zonatech-nav">
-                <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-                <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Register</a>
+                <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+                <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+                <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Register</a>
             </nav>
             
             <!-- Hamburger Menu -->
@@ -42,12 +42,12 @@ if (!defined('ABSPATH')) exit;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
-            <a href="<?php echo home_url('/zonatech-login/'); ?>" class="active"><i class="fas fa-sign-in-alt"></i> Login</a>
-            <a href="<?php echo home_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
+            <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <a href="<?php echo site_url('/zonatech-login/'); ?>" class="active"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
         </nav>
         
         <div class="auth-card glass-effect">
@@ -96,7 +96,7 @@ if (!defined('ABSPATH')) exit;
             
             <p class="text-center text-muted" style="font-size: 0.85rem;">
                 Don't have an account? 
-                <a href="<?php echo home_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create one</a>
+                <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create one</a>
             </p>
         </div>
         

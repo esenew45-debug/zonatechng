@@ -15,14 +15,15 @@ if (!defined('ABSPATH')) exit;
                 <span>ZonaTech NG</span>
             </div>
             <nav class="zonatech-nav">
-                <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="active"><i class="fas fa-book-open"></i> Past Questions</a>
-                <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-                <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+                <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+                <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="active"><i class="fas fa-book-open"></i> Past Questions</a>
+                <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+                <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
                 <?php if (is_user_logged_in()): ?>
-                    <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <?php else: ?>
-                    <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Register</a>
                 <?php endif; ?>
             </nav>
             
@@ -48,15 +49,15 @@ if (!defined('ABSPATH')) exit;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
-            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="active"><i class="fas fa-book-open"></i> Past Questions</a>
-            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="active"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
             <?php if (is_user_logged_in()): ?>
-                <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             <?php else: ?>
-                <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
-                <a href="<?php echo home_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
             <?php endif; ?>
         </nav>
         
@@ -141,10 +142,10 @@ if (!defined('ABSPATH')) exit;
                     <h3 class="text-white">Login Required</h3>
                     <p class="text-muted">Please login or create an account to access past questions.</p>
                     <div class="mt-2">
-                        <a href="<?php echo home_url('/zonatech-login/'); ?>" class="btn btn-primary">
+                        <a href="<?php echo site_url('/zonatech-login/'); ?>" class="btn btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </a>
-                        <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-secondary">
+                        <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-secondary">
                             <i class="fas fa-user-plus"></i> Register
                         </a>
                     </div>

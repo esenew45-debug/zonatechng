@@ -106,6 +106,48 @@ class ZonaTech_NG {
         if (is_admin()) {
             ZonaTech_Admin::get_instance();
         }
+        
+        // Flush rewrite rules if needed (after activation)
+        if (get_option('zonatech_flush_rewrite_rules')) {
+            flush_rewrite_rules();
+            delete_option('zonatech_flush_rewrite_rules');
+        }
+        
+        // Ensure pages exist
+        $this->ensure_pages_exist();
+    }
+    
+    private function ensure_pages_exist() {
+        // Only check once per day to avoid performance issues
+        $last_check = get_option('zonatech_pages_check', 0);
+        if (time() - $last_check < DAY_IN_SECONDS) {
+            return;
+        }
+        
+        $required_pages = array(
+            'zonatech-dashboard',
+            'zonatech-login',
+            'zonatech-register',
+            'zonatech-past-questions',
+            'zonatech-nin-service',
+            'zonatech-scratch-cards',
+            'zonatech-payment'
+        );
+        
+        $missing_pages = false;
+        foreach ($required_pages as $slug) {
+            if (!get_page_by_path($slug)) {
+                $missing_pages = true;
+                break;
+            }
+        }
+        
+        if ($missing_pages) {
+            $this->create_pages();
+            flush_rewrite_rules();
+        }
+        
+        update_option('zonatech_pages_check', time());
     }
     
     public function activate() {
@@ -113,6 +155,9 @@ class ZonaTech_NG {
         ZonaTech_Database::seed_sample_data();
         $this->create_pages();
         flush_rewrite_rules();
+        
+        // Set a flag to flush rewrite rules on next init
+        update_option('zonatech_flush_rewrite_rules', true);
     }
     
     public function deactivate() {
@@ -121,6 +166,10 @@ class ZonaTech_NG {
     
     private function create_pages() {
         $pages = array(
+            'home' => array(
+                'title' => 'Homepage',
+                'content' => '[zonatech_homepage]'
+            ),
             'zonatech-dashboard' => array(
                 'title' => 'Dashboard',
                 'content' => '[zonatech_dashboard]'
@@ -152,14 +201,23 @@ class ZonaTech_NG {
         );
         
         foreach ($pages as $slug => $page) {
-            if (!get_page_by_path($slug)) {
-                wp_insert_post(array(
+            // Check if page exists by slug
+            $existing_page = get_page_by_path($slug);
+            
+            if (!$existing_page) {
+                $post_id = wp_insert_post(array(
                     'post_title' => $page['title'],
                     'post_name' => $slug,
                     'post_content' => $page['content'],
                     'post_status' => 'publish',
                     'post_type' => 'page'
                 ));
+                
+                // Set homepage as front page
+                if ($slug === 'home' && $post_id) {
+                    update_option('show_on_front', 'page');
+                    update_option('page_on_front', $post_id);
+                }
             }
         }
     }

@@ -19,10 +19,10 @@ if (!defined('ABSPATH')) exit;
                 <a href="#past-questions"><i class="fas fa-book-open"></i> Past Questions</a>
                 <a href="#scratch-cards"><i class="fas fa-credit-card"></i> Scratch Cards</a>
                 <?php if (is_user_logged_in()): ?>
-                    <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <?php else: ?>
-                    <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
-                    <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Get Started</a>
+                    <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Get Started</a>
                 <?php endif; ?>
             </nav>
             
@@ -48,16 +48,16 @@ if (!defined('ABSPATH')) exit;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <a href="<?php echo home_url(); ?>"><i class="fas fa-home"></i> Home</a>
+            <a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Home</a>
             <a href="#services"><i class="fas fa-concierge-bell"></i> Services</a>
-            <a href="<?php echo home_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
-            <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
-            <a href="<?php echo home_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
+            <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+            <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
             <?php if (is_user_logged_in()): ?>
-                <a href="<?php echo home_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             <?php else: ?>
-                <a href="<?php echo home_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
-                <a href="<?php echo home_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
+                <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
             <?php endif; ?>
         </nav>
         
@@ -71,10 +71,10 @@ if (!defined('ABSPATH')) exit;
                 and retrieve your NIN - all in one place.
             </p>
             <div class="d-flex justify-center gap-2" style="flex-wrap: wrap;">
-                <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="btn btn-primary btn-lg">
+                <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="btn btn-primary btn-lg">
                     <i class="fas fa-book-open"></i> Explore Past Questions
                 </a>
-                <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-secondary btn-lg">
+                <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-secondary btn-lg">
                     <i class="fas fa-user-plus"></i> Create Account
                 </a>
             </div>
@@ -118,7 +118,7 @@ if (!defined('ABSPATH')) exit;
                     <h3 class="service-card-title">Past Questions</h3>
                     <p class="service-card-desc">Access JAMB, WAEC, and NECO past questions from 2010 to present with detailed answers.</p>
                     <p class="service-card-price">₦<?php echo number_format(ZONATECH_SUBJECT_PRICE); ?>/subject</p>
-                    <a href="<?php echo home_url('/zonatech-past-questions/'); ?>" class="btn btn-primary">
+                    <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="btn btn-primary">
                         <i class="fas fa-arrow-right"></i> View Questions
                     </a>
                 </div>
@@ -131,7 +131,7 @@ if (!defined('ABSPATH')) exit;
                     <h3 class="service-card-title">Scratch Cards</h3>
                     <p class="service-card-desc">Purchase WAEC, NECO, and JAMB scratch cards & PINs instantly.</p>
                     <p class="service-card-price">₦<?php echo number_format(ZONATECH_SCRATCH_CARD_PRICE); ?></p>
-                    <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>" class="btn btn-primary">
+                    <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>" class="btn btn-primary">
                         <i class="fas fa-arrow-right"></i> Buy Cards
                     </a>
                 </div>
@@ -144,7 +144,7 @@ if (!defined('ABSPATH')) exit;
                     <h3 class="service-card-title">NIN Service</h3>
                     <p class="service-card-desc">Retrieve your NIN number and download your premium NIN slip.</p>
                     <p class="service-card-price">₦<?php echo number_format(ZONATECH_NIN_SLIP_PRICE); ?></p>
-                    <a href="<?php echo home_url('/zonatech-nin-service/'); ?>" class="btn btn-primary">
+                    <a href="<?php echo site_url('/zonatech-nin-service/'); ?>" class="btn btn-primary">
                         <i class="fas fa-arrow-right"></i> Get NIN Slip
                     </a>
                 </div>
@@ -248,7 +248,7 @@ if (!defined('ABSPATH')) exit;
                 <p class="text-muted" style="max-width: 500px; margin: 0 auto 1.5rem;">
                     Join thousands of students who are preparing for success with ZonaTech NG.
                 </p>
-                <a href="<?php echo home_url('/zonatech-register/'); ?>" class="btn btn-primary btn-lg glow">
+                <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-lg glow">
                     <i class="fas fa-rocket"></i> Get Started Now
                 </a>
             </div>
@@ -264,13 +264,13 @@ if (!defined('ABSPATH')) exit;
                 <p class="footer-tagline">Your Gateway to Academic Excellence</p>
                 
                 <div class="footer-links">
-                    <a href="<?php echo home_url('/zonatech-past-questions/'); ?>">
+                    <a href="<?php echo site_url('/zonatech-past-questions/'); ?>">
                         <i class="fas fa-book-open"></i> Past Questions
                     </a>
-                    <a href="<?php echo home_url('/zonatech-scratch-cards/'); ?>">
+                    <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>">
                         <i class="fas fa-credit-card"></i> Scratch Cards
                     </a>
-                    <a href="<?php echo home_url('/zonatech-nin-service/'); ?>">
+                    <a href="<?php echo site_url('/zonatech-nin-service/'); ?>">
                         <i class="fas fa-id-card"></i> NIN Service
                     </a>
                 </div>

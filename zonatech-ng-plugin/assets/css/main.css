@@ -149,49 +149,105 @@
 
 .btn-primary {
     background: var(--zona-gradient-purple);
-    color: var(--zona-white);
+    color: #ffffff !important;
     box-shadow: var(--shadow-purple);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+    color: #ffffff !important;
+}
+
+/* Button Color Animations */
+@keyframes btn-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes btn-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); }
+}
+
+@keyframes btn-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+    background-size: 200% 200%;
+    animation: btn-glow 3s ease-in-out infinite;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+    background-position: right center;
+    animation: btn-shimmer 1.5s ease-in-out infinite, btn-glow 1.5s ease-in-out infinite;
+    transform: translateY(-2px) scale(1.02);
 }
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--zona-white);
+    color: #ffffff !important;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.2);
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    border-color: rgba(139, 92, 246, 0.5);
 }
 
 .btn-ghost {
     background: transparent;
-    color: var(--zona-white-muted);
+    color: #ffffff !important;
     border: 1px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-ghost:hover {
-    color: var(--zona-white);
+    color: #ffffff !important;
     border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .btn-success {
     background: var(--zona-success);
-    color: var(--zona-white);
+    color: #ffffff !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
 }
 
 .btn-warning {
     background: var(--zona-warning);
-    color: var(--zona-black);
+    color: #000000 !important;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
 }
 
 .btn-error {
     background: var(--zona-error);
-    color: var(--zona-white);
+    color: #ffffff !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-error:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
 }
 
 .btn-sm {
