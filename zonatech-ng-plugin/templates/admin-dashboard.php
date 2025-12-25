@@ -14,6 +14,124 @@ if (!current_user_can('manage_options')) {
 
 global $wpdb;
 
+// Handle form submissions
+$message = '';
+$message_type = '';
+
+// Handle single question addition
+if (isset($_POST['add_single_question']) && wp_verify_nonce($_POST['question_nonce'], 'zonatech_add_question')) {
+    $exam_type = sanitize_text_field($_POST['exam_type']);
+    $subject = sanitize_text_field($_POST['subject']);
+    $year = intval($_POST['year']);
+    $question_text = sanitize_textarea_field($_POST['question_text']);
+    $option_a = sanitize_text_field($_POST['option_a']);
+    $option_b = sanitize_text_field($_POST['option_b']);
+    $option_c = sanitize_text_field($_POST['option_c']);
+    $option_d = sanitize_text_field($_POST['option_d']);
+    $correct_answer = sanitize_text_field($_POST['correct_answer']);
+    $explanation = sanitize_textarea_field($_POST['explanation']);
+    
+    $table_questions = $wpdb->prefix . 'zonatech_questions';
+    
+    $result = $wpdb->insert($table_questions, array(
+        'exam_type' => $exam_type,
+        'subject' => $subject,
+        'year' => $year,
+        'question_text' => $question_text,
+        'option_a' => $option_a,
+        'option_b' => $option_b,
+        'option_c' => $option_c,
+        'option_d' => $option_d,
+        'correct_answer' => $correct_answer,
+        'explanation' => $explanation,
+        'created_at' => current_time('mysql')
+    ));
+    
+    if ($result) {
+        $message = 'Question added successfully!';
+        $message_type = 'success';
+    } else {
+        $message = 'Failed to add question. Please try again.';
+        $message_type = 'error';
+    }
+}
+
+// Handle bulk CSV upload
+if (isset($_POST['bulk_upload_questions']) && wp_verify_nonce($_POST['bulk_nonce'], 'zonatech_bulk_upload')) {
+    if (!empty($_FILES['csv_file']['tmp_name'])) {
+        $file = $_FILES['csv_file']['tmp_name'];
+        $handle = fopen($file, 'r');
+        $header = fgetcsv($handle); // Skip header row
+        
+        $table_questions = $wpdb->prefix . 'zonatech_questions';
+        $success_count = 0;
+        $error_count = 0;
+        
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) >= 9) {
+                $result = $wpdb->insert($table_questions, array(
+                    'exam_type' => sanitize_text_field($row[0]),
+                    'subject' => sanitize_text_field($row[1]),
+                    'year' => intval($row[2]),
+                    'question_text' => sanitize_textarea_field($row[3]),
+                    'option_a' => sanitize_text_field($row[4]),
+                    'option_b' => sanitize_text_field($row[5]),
+                    'option_c' => sanitize_text_field($row[6]),
+                    'option_d' => sanitize_text_field($row[7]),
+                    'correct_answer' => sanitize_text_field($row[8]),
+                    'explanation' => isset($row[9]) ? sanitize_textarea_field($row[9]) : '',
+                    'created_at' => current_time('mysql')
+                ));
+                
+                if ($result) {
+                    $success_count++;
+                } else {
+                    $error_count++;
+                }
+            }
+        }
+        fclose($handle);
+        
+        $message = "Bulk upload completed: $success_count questions added successfully, $error_count failed.";
+        $message_type = $error_count > 0 ? 'warning' : 'success';
+    } else {
+        $message = 'Please select a CSV file to upload.';
+        $message_type = 'error';
+    }
+}
+
+// Handle scratch card generation
+if (isset($_POST['generate_cards']) && wp_verify_nonce($_POST['cards_nonce'], 'zonatech_generate_cards')) {
+    $card_type = sanitize_text_field($_POST['card_type']);
+    $quantity = intval($_POST['quantity']);
+    
+    if ($quantity > 0 && $quantity <= 100) {
+        $table_cards = $wpdb->prefix . 'zonatech_scratch_cards';
+        $generated = 0;
+        
+        for ($i = 0; $i < $quantity; $i++) {
+            $pin = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 12));
+            $serial = 'ZT' . date('Ymd') . strtoupper(substr(md5(mt_rand()), 0, 6));
+            
+            $result = $wpdb->insert($table_cards, array(
+                'card_type' => $card_type,
+                'serial_number' => $serial,
+                'pin' => $pin,
+                'status' => 'available',
+                'created_at' => current_time('mysql')
+            ));
+            
+            if ($result) $generated++;
+        }
+        
+        $message = "$generated $card_type scratch cards generated successfully!";
+        $message_type = 'success';
+    } else {
+        $message = 'Please enter a valid quantity (1-100).';
+        $message_type = 'error';
+    }
+}
+
 // Get statistics
 $table_purchases = $wpdb->prefix . 'zonatech_purchases';
 $table_questions = $wpdb->prefix . 'zonatech_questions';
@@ -170,30 +288,53 @@ $current_user = wp_get_current_user();
         .admin-logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 15px 0;
+            gap: 15px;
+            padding: 20px 0;
             margin-bottom: 30px;
             border-bottom: 1px solid rgba(139, 92, 246, 0.2);
         }
         
+        .admin-logo a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
         .admin-logo img {
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .admin-logo img:hover {
+            border-color: rgba(139, 92, 246, 0.8);
+            transform: scale(1.05);
+        }
+        
+        .admin-logo-text {
+            flex: 1;
+            min-width: 0;
         }
         
         .admin-logo h2 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             background: linear-gradient(135deg, #8b5cf6, #a78bfa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin: 0;
+            line-height: 1.3;
         }
         
         .admin-logo span {
             font-size: 11px;
             color: rgba(255, 255, 255, 0.5);
             display: block;
+            margin-top: 2px;
         }
         
         .admin-nav {
@@ -644,6 +785,269 @@ $current_user = wp_get_current_user();
                 font-size: 22px;
             }
         }
+        
+        /* Modal Styles */
+        .admin-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+        
+        .admin-modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .admin-modal-content {
+            background: linear-gradient(135deg, rgba(30, 30, 50, 0.98), rgba(20, 20, 35, 0.98));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .admin-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .admin-modal-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+        }
+        
+        .admin-modal-header h2 i {
+            color: #8b5cf6;
+        }
+        
+        .admin-modal-close {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-modal-close:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+        
+        /* Form Styles */
+        .admin-form-group {
+            margin-bottom: 20px;
+        }
+        
+        .admin-form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+        
+        .admin-form-group input,
+        .admin-form-group select,
+        .admin-form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-form-group input:focus,
+        .admin-form-group select:focus,
+        .admin-form-group textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        
+        .admin-form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .admin-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .admin-form-row-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .admin-form-row, .admin-form-row-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .admin-form-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .admin-form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Tabs */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .admin-tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .admin-tab:hover, .admin-tab.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.5);
+            color: #ffffff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .file-upload-area i {
+            font-size: 40px;
+            color: #8b5cf6;
+            margin-bottom: 15px;
+        }
+        
+        .file-upload-area p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+        }
+        
+        .file-upload-area small {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+        
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+        
+        /* Message Alert */
+        .admin-alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .admin-alert.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #10b981;
+        }
+        
+        .admin-alert.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+        
+        .admin-alert.warning {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #f59e0b;
+        }
+        
+        /* Download Link */
+        .download-template {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 8px;
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .download-template:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -661,14 +1065,14 @@ $current_user = wp_get_current_user();
                 <a href="<?php echo site_url(); ?>">
                     <img src="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/logo.png" alt="ZonaTech NG">
                 </a>
-                <div>
+                <div class="admin-logo-text">
                     <h2>ZonaTech NG</h2>
                     <span>Admin Dashboard</span>
                 </div>
             </div>
             
             <ul class="admin-nav">
-                <li><a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li><a href="#users"><i class="fas fa-users"></i> Users</a></li>
                 <li><a href="#purchases"><i class="fas fa-shopping-cart"></i> Purchases</a></li>
                 <li><a href="#questions"><i class="fas fa-book"></i> Questions</a></li>
@@ -676,9 +1080,9 @@ $current_user = wp_get_current_user();
                 
                 <div class="nav-divider"></div>
                 
-                <li><a href="<?php echo admin_url('admin.php?page=zonatech-questions'); ?>"><i class="fas fa-plus-circle"></i> Add Questions</a></li>
-                <li><a href="<?php echo admin_url('admin.php?page=zonatech-cards'); ?>"><i class="fas fa-ticket-alt"></i> Manage Cards</a></li>
-                <li><a href="<?php echo admin_url('admin.php?page=zonatech-settings'); ?>"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="#" onclick="openModal('addQuestionModal'); return false;"><i class="fas fa-plus-circle"></i> Add Questions</a></li>
+                <li><a href="#" onclick="openModal('manageCardsModal'); return false;"><i class="fas fa-ticket-alt"></i> Manage Cards</a></li>
+                <li><a href="#" onclick="openModal('settingsModal'); return false;"><i class="fas fa-cog"></i> Settings</a></li>
                 
                 <div class="nav-divider"></div>
                 
@@ -702,15 +1106,22 @@ $current_user = wp_get_current_user();
         
         <!-- Main Content -->
         <main class="admin-main">
+            <?php if (!empty($message)): ?>
+            <div class="admin-alert <?php echo esc_attr($message_type); ?>">
+                <i class="fas fa-<?php echo $message_type === 'success' ? 'check-circle' : ($message_type === 'warning' ? 'exclamation-triangle' : 'times-circle'); ?>"></i>
+                <?php echo esc_html($message); ?>
+            </div>
+            <?php endif; ?>
+            
             <div class="admin-header">
                 <h1><i class="fas fa-chart-line"></i> Dashboard Overview</h1>
                 <div class="admin-header-actions">
-                    <a href="<?php echo admin_url('admin.php?page=zonatech-questions'); ?>" class="btn-admin btn-admin-primary">
+                    <button onclick="openModal('addQuestionModal')" class="btn-admin btn-admin-primary">
                         <i class="fas fa-plus"></i> Add Question
-                    </a>
-                    <a href="<?php echo admin_url('admin.php?page=zonatech-cards'); ?>" class="btn-admin btn-admin-outline">
+                    </button>
+                    <button onclick="openModal('manageCardsModal')" class="btn-admin btn-admin-outline">
                         <i class="fas fa-ticket-alt"></i> Add Cards
-                    </a>
+                    </button>
                 </div>
             </div>
             
@@ -814,7 +1225,7 @@ $current_user = wp_get_current_user();
                 <div class="admin-section" id="purchases">
                     <div class="section-header">
                         <h2><i class="fas fa-shopping-cart"></i> Recent Purchases</h2>
-                        <a href="<?php echo admin_url('admin.php?page=zonatech-ng'); ?>" class="btn-admin btn-admin-outline">View All</a>
+                        <span class="btn-admin btn-admin-outline" style="opacity: 0.7;">Showing Latest 10</span>
                     </div>
                     <table class="admin-table">
                         <thead>
@@ -858,7 +1269,7 @@ $current_user = wp_get_current_user();
                 <div class="admin-section" id="users">
                     <div class="section-header">
                         <h2><i class="fas fa-users"></i> Recent Users</h2>
-                        <a href="<?php echo admin_url('admin.php?page=zonatech-users'); ?>" class="btn-admin btn-admin-outline">View All</a>
+                        <span class="btn-admin btn-admin-outline" style="opacity: 0.7;">Showing Latest 10</span>
                     </div>
                     <table class="admin-table">
                         <thead>
@@ -925,7 +1336,7 @@ $current_user = wp_get_current_user();
                 <div class="admin-section">
                     <div class="section-header">
                         <h2><i class="fas fa-ticket-alt"></i> Available Scratch Cards</h2>
-                        <a href="<?php echo admin_url('admin.php?page=zonatech-cards'); ?>" class="btn-admin btn-admin-outline">Manage</a>
+                        <button onclick="openModal('manageCardsModal')" class="btn-admin btn-admin-outline">Add More</button>
                     </div>
                     <?php if (!empty($available_cards)): ?>
                     <div class="three-columns">
@@ -937,7 +1348,7 @@ $current_user = wp_get_current_user();
                         <?php endforeach; ?>
                     </div>
                     <?php else: ?>
-                    <p style="text-align: center; color: rgba(255,255,255,0.5);">No scratch cards available. <a href="<?php echo admin_url('admin.php?page=zonatech-cards'); ?>" style="color: #8b5cf6;">Add some</a></p>
+                    <p style="text-align: center; color: rgba(255,255,255,0.5);">No scratch cards available. <a href="#" onclick="openModal('manageCardsModal'); return false;" style="color: #8b5cf6;">Add some</a></p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -946,7 +1357,7 @@ $current_user = wp_get_current_user();
             <div class="admin-section" id="feedback">
                 <div class="section-header">
                     <h2><i class="fas fa-comments"></i> Recent Feedback</h2>
-                    <a href="<?php echo admin_url('admin.php?page=zonatech-feedback'); ?>" class="btn-admin btn-admin-outline">View All</a>
+                    <span class="btn-admin btn-admin-outline" style="opacity: 0.7;">Showing Latest 5</span>
                 </div>
                 <?php if (!empty($recent_feedback)): ?>
                     <?php foreach ($recent_feedback as $fb): ?>
@@ -1013,6 +1424,223 @@ $current_user = wp_get_current_user();
         </main>
     </div>
     
+    <!-- Add Question Modal -->
+    <div class="admin-modal" id="addQuestionModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h2><i class="fas fa-plus-circle"></i> Add Questions</h2>
+                <button class="admin-modal-close" onclick="closeModal('addQuestionModal')">&times;</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="switchTab('singleQuestion', this)">Single Question</button>
+                <button class="admin-tab" onclick="switchTab('bulkUpload', this)">Bulk Upload (CSV)</button>
+            </div>
+            
+            <!-- Single Question Form -->
+            <div class="tab-content active" id="singleQuestion">
+                <form method="POST" action="">
+                    <?php wp_nonce_field('zonatech_add_question', 'question_nonce'); ?>
+                    
+                    <div class="admin-form-row-3">
+                        <div class="admin-form-group">
+                            <label>Exam Type *</label>
+                            <select name="exam_type" required>
+                                <option value="">Select Exam</option>
+                                <option value="jamb">JAMB</option>
+                                <option value="waec">WAEC</option>
+                                <option value="neco">NECO</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Subject *</label>
+                            <select name="subject" id="modalSubject" required>
+                                <option value="">Select Subject</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Year *</label>
+                            <select name="year" required>
+                                <option value="">Select Year</option>
+                                <?php for ($y = date('Y'); $y >= 2010; $y--): ?>
+                                <option value="<?php echo $y; ?>"><?php echo $y; ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-form-group">
+                        <label>Question Text *</label>
+                        <textarea name="question_text" placeholder="Enter the question..." required></textarea>
+                    </div>
+                    
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Option A *</label>
+                            <input type="text" name="option_a" placeholder="First option" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Option B *</label>
+                            <input type="text" name="option_b" placeholder="Second option" required>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Option C *</label>
+                            <input type="text" name="option_c" placeholder="Third option" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Option D *</label>
+                            <input type="text" name="option_d" placeholder="Fourth option" required>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Correct Answer *</label>
+                            <select name="correct_answer" required>
+                                <option value="">Select Answer</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Explanation (Optional)</label>
+                            <input type="text" name="explanation" placeholder="Why this answer is correct">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" name="add_single_question" class="admin-form-submit">
+                        <i class="fas fa-plus"></i> Add Question
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Bulk Upload Form -->
+            <div class="tab-content" id="bulkUpload">
+                <a href="#" onclick="downloadCSVTemplate(); return false;" class="download-template">
+                    <i class="fas fa-download"></i> Download CSV Template
+                </a>
+                
+                <form method="POST" action="" enctype="multipart/form-data">
+                    <?php wp_nonce_field('zonatech_bulk_upload', 'bulk_nonce'); ?>
+                    
+                    <div class="file-upload-area" onclick="document.getElementById('csvFile').click();">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload CSV file</p>
+                        <small>Format: exam_type, subject, year, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation</small>
+                        <input type="file" name="csv_file" id="csvFile" accept=".csv" onchange="handleFileSelect(this)">
+                    </div>
+                    
+                    <p id="selectedFile" style="text-align: center; color: #8b5cf6; margin-bottom: 15px;"></p>
+                    
+                    <button type="submit" name="bulk_upload_questions" class="admin-form-submit">
+                        <i class="fas fa-upload"></i> Upload Questions
+                    </button>
+                </form>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 10px;">
+                    <h4 style="margin-bottom: 10px; color: #3b82f6;"><i class="fas fa-info-circle"></i> CSV Format Guide</h4>
+                    <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">
+                        Each row should contain: exam_type (jamb/waec/neco), subject, year, question_text, option_a, option_b, option_c, option_d, correct_answer (A/B/C/D), explanation (optional)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Manage Cards Modal -->
+    <div class="admin-modal" id="manageCardsModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h2><i class="fas fa-ticket-alt"></i> Generate Scratch Cards</h2>
+                <button class="admin-modal-close" onclick="closeModal('manageCardsModal')">&times;</button>
+            </div>
+            
+            <form method="POST" action="">
+                <?php wp_nonce_field('zonatech_generate_cards', 'cards_nonce'); ?>
+                
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label>Card Type *</label>
+                        <select name="card_type" required>
+                            <option value="">Select Type</option>
+                            <option value="waec">WAEC Result Checker</option>
+                            <option value="neco">NECO Result Checker</option>
+                            <option value="jamb">JAMB Profile Code</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Quantity (1-100) *</label>
+                        <input type="number" name="quantity" min="1" max="100" placeholder="Number of cards" required>
+                    </div>
+                </div>
+                
+                <button type="submit" name="generate_cards" class="admin-form-submit">
+                    <i class="fas fa-magic"></i> Generate Cards
+                </button>
+            </form>
+            
+            <div style="margin-top: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: rgba(255,255,255,0.8);"><i class="fas fa-list"></i> Current Stock</h3>
+                <?php if (!empty($available_cards)): ?>
+                <div class="three-columns">
+                    <?php foreach ($available_cards as $card): ?>
+                    <div class="card-info">
+                        <h4><?php echo strtoupper(esc_html($card->card_type)); ?></h4>
+                        <div class="value"><?php echo number_format($card->count); ?></div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <p style="text-align: center; color: rgba(255,255,255,0.5);">No scratch cards in stock</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="admin-modal" id="settingsModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <button class="admin-modal-close" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            
+            <div style="padding: 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; text-align: center;">
+                <i class="fas fa-info-circle" style="font-size: 40px; color: #8b5cf6; margin-bottom: 15px;"></i>
+                <h3 style="margin-bottom: 10px;">Payment Settings</h3>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px;">
+                    Configure Paystack API keys in WordPress Admin for payment processing.
+                </p>
+                <a href="<?php echo admin_url('admin.php?page=zonatech-settings'); ?>" class="btn-admin btn-admin-primary" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> Open Settings
+                </a>
+            </div>
+            
+            <div style="margin-top: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px;"><i class="fas fa-sliders-h"></i> Quick Info</h3>
+                <div class="three-columns">
+                    <div class="card-info">
+                        <h4>Subject Price</h4>
+                        <div class="value">₦5,000</div>
+                    </div>
+                    <div class="card-info">
+                        <h4>Scratch Card</h4>
+                        <div class="value">₦5,000</div>
+                    </div>
+                    <div class="card-info">
+                        <h4>NIN Slip</h4>
+                        <div class="value">₦1-2K</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
         function toggleSidebar() {
             document.getElementById('adminSidebar').classList.toggle('open');
@@ -1025,6 +1653,81 @@ $current_user = wp_get_current_user();
             if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
                 sidebar.classList.remove('open');
             }
+        });
+        
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Close modal on backdrop click
+        document.querySelectorAll('.admin-modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+        
+        // Tab switching
+        function switchTab(tabId, button) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            button.classList.add('active');
+        }
+        
+        // File upload handling
+        function handleFileSelect(input) {
+            const fileName = input.files[0]?.name;
+            if (fileName) {
+                document.getElementById('selectedFile').textContent = 'Selected: ' + fileName;
+            }
+        }
+        
+        // Download CSV template
+        function downloadCSVTemplate() {
+            const headers = 'exam_type,subject,year,question_text,option_a,option_b,option_c,option_d,correct_answer,explanation\n';
+            const example = 'jamb,Mathematics,2023,"What is 2 + 2?",3,4,5,6,B,"2 + 2 equals 4"';
+            const blob = new Blob([headers + example], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'zonatech_questions_template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // Subject dropdown population based on exam type
+        const subjects = {
+            jamb: ['Use of English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Agricultural Science', 'Economics', 'Commerce', 'Accounting', 'Government', 'Geography', 'Literature in English', 'Christian Religious Studies', 'Islamic Religious Studies', 'History', 'Civic Education', 'Home Economics', 'Food & Nutrition', 'Fine Arts', 'Music', 'French', 'Arabic', 'Hausa', 'Igbo', 'Yoruba', 'Physical Education'],
+            waec: ['English Language', 'Mathematics', 'Civic Education', 'Physics', 'Chemistry', 'Biology', 'Agricultural Science', 'Further Mathematics', 'Health Education', 'Economics', 'Commerce', 'Financial Accounting', 'Literature in English', 'Government', 'History', 'Christian Religious Studies', 'Islamic Religious Studies', 'Geography', 'Fine Arts', 'Music', 'French', 'Arabic', 'Hausa', 'Igbo', 'Yoruba', 'Data Processing', 'Computer Studies', 'Animal Husbandry', 'Technical Drawing'],
+            neco: ['English Language', 'Mathematics', 'Civic Education', 'Physics', 'Chemistry', 'Biology', 'Agricultural Science', 'Further Mathematics', 'Health Science', 'Economics', 'Commerce', 'Financial Accounting', 'Literature in English', 'Government', 'History', 'Christian Religious Studies', 'Islamic Religious Studies', 'Geography', 'Fine Arts', 'Music', 'French', 'Arabic', 'Hausa', 'Igbo', 'Yoruba', 'Computer Studies', 'Data Processing', 'Marketing', 'Home Economics', 'Animal Husbandry', 'Technical Drawing']
+        };
+        
+        document.querySelector('select[name="exam_type"]')?.addEventListener('change', function() {
+            const subjectSelect = document.getElementById('modalSubject');
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+            
+            const examSubjects = subjects[this.value] || [];
+            examSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectSelect.appendChild(option);
+            });
         });
     </script>
 </body>
