@@ -29,6 +29,7 @@ class ZonaTech_Shortcodes {
         add_shortcode('zonatech_payment', array($this, 'render_payment'));
         add_shortcode('zonatech_homepage', array($this, 'render_homepage'));
         add_shortcode('zonatech_feedback', array($this, 'render_feedback'));
+        add_shortcode('zonatech_admin_dashboard', array($this, 'render_admin_dashboard'));
     }
     
     /**
@@ -143,6 +144,18 @@ class ZonaTech_Shortcodes {
     public function render_feedback() {
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/feedback.php';
+        return ob_get_clean();
+    }
+    
+    public function render_admin_dashboard() {
+        // Only allow admin users
+        if (!current_user_can('manage_options')) {
+            wp_redirect(site_url('/zonatech-dashboard/'));
+            exit;
+        }
+        
+        ob_start();
+        include ZONATECH_PLUGIN_DIR . 'templates/admin-dashboard.php';
         return ob_get_clean();
     }
 }

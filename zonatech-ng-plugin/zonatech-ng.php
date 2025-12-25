@@ -326,6 +326,10 @@ class ZonaTech_NG {
             'zonatech-feedback' => array(
                 'title' => 'Feedback',
                 'content' => '[zonatech_feedback]'
+            ),
+            'zonatech-admin' => array(
+                'title' => 'Admin Dashboard',
+                'content' => '[zonatech_admin_dashboard]'
             )
         );
         

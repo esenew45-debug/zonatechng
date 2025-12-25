@@ -43,6 +43,10 @@ $stats = $user_data['stats'];
                 <ul class="sidebar-nav">
                     <li><a href="<?php echo site_url(); ?>"><i class="fas fa-home"></i> Back to Home</a></li>
                     
+                    <?php if (current_user_can('manage_options')): ?>
+                    <li><a href="<?php echo site_url('/zonatech-admin/'); ?>" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.2)); border-left: 3px solid #8b5cf6;"><i class="fas fa-chart-line"></i> Admin Dashboard</a></li>
+                    <?php endif; ?>
+                    
                     <li class="nav-divider"></li>
                     
                     <li><a href="#overview" class="active" data-section="overview"><i class="fas fa-tachometer-alt"></i> Overview</a></li>
