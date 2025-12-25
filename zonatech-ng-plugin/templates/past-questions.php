@@ -257,5 +257,239 @@ jQuery(document).ready(function($) {
     mobileNav.find('a').on('click', function() {
         closeMobileNav();
     });
+    
+    // =============================================
+    // Past Questions - Subject and Year Filtering
+    // =============================================
+    
+    // When exam type changes, load subjects and years
+    $('#exam-type-select').on('change', function() {
+        var examType = $(this).val();
+        var $subjectSelect = $('#subject-select');
+        var $yearSelect = $('#year-select');
+        
+        // Reset subject and year dropdowns
+        $subjectSelect.html('<option value="">Loading...</option>');
+        $yearSelect.html('<option value="">Select Subject First</option>');
+        
+        if (!examType) {
+            $subjectSelect.html('<option value="">Select Subject</option>');
+            return;
+        }
+        
+        // Fetch subjects for the selected exam type
+        $.ajax({
+            url: zonatech_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'zonatech_get_subjects',
+                nonce: zonatech_ajax.nonce,
+                exam_type: examType
+            },
+            success: function(response) {
+                if (response.success && response.data.subjects) {
+                    var options = '<option value="">Select Subject</option>';
+                    $.each(response.data.subjects, function(index, subject) {
+                        options += '<option value="' + subject + '">' + subject + '</option>';
+                    });
+                    $subjectSelect.html(options);
+                    
+                    // Also fetch years for the exam type
+                    fetchYears(examType, '');
+                } else {
+                    $subjectSelect.html('<option value="">No subjects available</option>');
+                    showNotification('No subjects found for this exam type.', 'warning');
+                }
+            },
+            error: function() {
+                $subjectSelect.html('<option value="">Error loading subjects</option>');
+                showNotification('Failed to load subjects. Please try again.', 'error');
+            }
+        });
+    });
+    
+    // When subject changes, load years for that subject
+    $('#subject-select').on('change', function() {
+        var examType = $('#exam-type-select').val();
+        var subject = $(this).val();
+        
+        if (examType) {
+            fetchYears(examType, subject);
+        }
+    });
+    
+    // Function to fetch years
+    function fetchYears(examType, subject) {
+        var $yearSelect = $('#year-select');
+        $yearSelect.html('<option value="">Loading years...</option>');
+        
+        $.ajax({
+            url: zonatech_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'zonatech_get_years',
+                nonce: zonatech_ajax.nonce,
+                exam_type: examType,
+                subject: subject
+            },
+            success: function(response) {
+                if (response.success && response.data.years && response.data.years.length > 0) {
+                    var options = '<option value="">Select Year</option>';
+                    $.each(response.data.years, function(index, year) {
+                        options += '<option value="' + year + '">' + year + '</option>';
+                    });
+                    $yearSelect.html(options);
+                } else {
+                    // Show default years from 2010 to present
+                    var currentYear = new Date().getFullYear();
+                    var options = '<option value="">Select Year</option>';
+                    for (var y = currentYear; y >= 2010; y--) {
+                        options += '<option value="' + y + '">' + y + '</option>';
+                    }
+                    $yearSelect.html(options);
+                }
+            },
+            error: function() {
+                // Fallback to default years
+                var currentYear = new Date().getFullYear();
+                var options = '<option value="">Select Year</option>';
+                for (var y = currentYear; y >= 2010; y--) {
+                    options += '<option value="' + y + '">' + y + '</option>';
+                }
+                $yearSelect.html(options);
+            }
+        });
+    }
+    
+    // Load Questions button click
+    $('#load-questions-btn').on('click', function() {
+        var examType = $('#exam-type-select').val();
+        var subject = $('#subject-select').val();
+        var year = $('#year-select').val();
+        
+        if (!examType) {
+            showNotification('Please select an exam type.', 'warning');
+            return;
+        }
+        
+        if (!subject) {
+            showNotification('Please select a subject.', 'warning');
+            return;
+        }
+        
+        if (!year) {
+            showNotification('Please select a year.', 'warning');
+            return;
+        }
+        
+        var $btn = $(this);
+        var originalText = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Loading...').prop('disabled', true);
+        
+        $.ajax({
+            url: zonatech_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'zonatech_get_questions',
+                nonce: zonatech_ajax.nonce,
+                exam_type: examType,
+                subject: subject,
+                year: year
+            },
+            success: function(response) {
+                if (response.success) {
+                    displayQuestions(response.data);
+                } else {
+                    if (response.data && response.data.require_payment) {
+                        showPaymentPrompt(response.data.exam_type, response.data.subject);
+                    } else {
+                        showNotification(response.data.message || 'Failed to load questions.', 'error');
+                    }
+                }
+            },
+            error: function() {
+                showNotification('An error occurred. Please try again.', 'error');
+            },
+            complete: function() {
+                $btn.html(originalText).prop('disabled', false);
+            }
+        });
+    });
+    
+    // Display questions in the container
+    function displayQuestions(data) {
+        var container = $('#questions-container');
+        var html = '<div class="glass-card">';
+        html += '<h3 class="text-white"><i class="fas fa-book-open"></i> ' + data.exam_type + ' ' + data.subject + ' - ' + data.year + '</h3>';
+        html += '<p class="text-muted mb-2">Total Questions: ' + data.total + '</p>';
+        
+        if (data.questions && data.questions.length > 0) {
+            html += '<div class="questions-list">';
+            $.each(data.questions, function(index, question) {
+                html += '<div class="question-item glass-effect" style="padding: 1rem; margin-bottom: 1rem; border-radius: 10px;">';
+                html += '<p class="text-white" style="font-weight: 600;"><strong>Q' + (index + 1) + '.</strong> ' + question.question_text + '</p>';
+                html += '<div class="options" style="margin-top: 0.5rem;">';
+                html += '<p class="text-muted"><strong>A.</strong> ' + question.option_a + '</p>';
+                html += '<p class="text-muted"><strong>B.</strong> ' + question.option_b + '</p>';
+                html += '<p class="text-muted"><strong>C.</strong> ' + question.option_c + '</p>';
+                html += '<p class="text-muted"><strong>D.</strong> ' + question.option_d + '</p>';
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            
+            // Add quiz button
+            html += '<div style="text-align: center; margin-top: 1.5rem;">';
+            html += '<button class="btn btn-primary" onclick="startQuiz(\'' + data.exam_type + '\', \'' + data.subject + '\', ' + data.year + ')">';
+            html += '<i class="fas fa-play"></i> Start Practice Quiz';
+            html += '</button>';
+            html += '</div>';
+        } else {
+            html += '<p class="text-muted text-center">No questions available for this selection.</p>';
+        }
+        
+        html += '</div>';
+        container.html(html);
+    }
+    
+    // Show payment prompt
+    function showPaymentPrompt(examType, subject) {
+        var html = '<div class="glass-card text-center" style="padding: 2rem;">';
+        html += '<i class="fas fa-lock" style="font-size: 3rem; color: var(--zona-purple); margin-bottom: 1rem;"></i>';
+        html += '<h3 class="text-white">Purchase Required</h3>';
+        html += '<p class="text-muted">You need to purchase access to ' + examType + ' ' + subject + ' questions.</p>';
+        html += '<p class="text-white" style="font-size: 1.5rem; margin: 1rem 0;"><strong>₦' + zonatech_ajax.subject_price.toLocaleString() + '</strong></p>';
+        html += '<button class="btn btn-primary" onclick="purchaseSubject(\'' + examType.toLowerCase() + '\', \'' + subject + '\')">';
+        html += '<i class="fas fa-credit-card"></i> Buy Now';
+        html += '</button>';
+        html += '</div>';
+        
+        $('#questions-container').html(html);
+    }
+    
+    // Helper function to show notifications
+    function showNotification(message, type) {
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
 });
+
+// Start quiz function (global scope)
+function startQuiz(examType, subject, year) {
+    alert('Starting quiz for ' + examType + ' ' + subject + ' ' + year);
+    // TODO: Implement quiz functionality
+}
+
+// Purchase subject function (global scope)
+function purchaseSubject(examType, subject) {
+    if (typeof zonatech_ajax !== 'undefined' && zonatech_ajax.paystack_configured) {
+        // Initialize Paystack payment
+        window.location.href = zonatech_ajax.ajax_url.replace('admin-ajax.php', '') + '../zonatech-payment/?type=subject&exam_type=' + examType + '&subject=' + encodeURIComponent(subject);
+    } else {
+        alert('Payment system is not configured. Please contact support.');
+    }
+}
 </script>

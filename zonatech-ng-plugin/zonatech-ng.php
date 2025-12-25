@@ -204,6 +204,34 @@ class ZonaTech_NG {
             'zonatech-register' => array(
                 'title' => 'Register',
                 'content' => '[zonatech_register]'
+            ),
+            'zonatech-feedback' => array(
+                'title' => 'Feedback',
+                'content' => '[zonatech_feedback]'
+            ),
+            'zonatech-admin' => array(
+                'title' => 'Admin Dashboard',
+                'content' => '[zonatech_admin_dashboard]'
+            ),
+            'zonatech-dashboard' => array(
+                'title' => 'Dashboard',
+                'content' => '[zonatech_dashboard]'
+            ),
+            'zonatech-past-questions' => array(
+                'title' => 'Past Questions',
+                'content' => '[zonatech_past_questions]'
+            ),
+            'zonatech-nin-service' => array(
+                'title' => 'NIN Service',
+                'content' => '[zonatech_nin_service]'
+            ),
+            'zonatech-scratch-cards' => array(
+                'title' => 'Scratch Cards',
+                'content' => '[zonatech_scratch_cards]'
+            ),
+            'zonatech-payment' => array(
+                'title' => 'Payment',
+                'content' => '[zonatech_payment]'
             )
         );
         
@@ -240,13 +268,16 @@ class ZonaTech_NG {
             'zonatech-past-questions',
             'zonatech-nin-service',
             'zonatech-scratch-cards',
-            'zonatech-payment'
+            'zonatech-payment',
+            'zonatech-feedback',
+            'zonatech-admin'
         );
         
         $missing_pages = array();
         foreach ($required_pages as $slug) {
             if (!get_page_by_path($slug)) {
                 $missing_pages[] = $slug;
+            }
             }
         }
         
