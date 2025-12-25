@@ -30,6 +30,67 @@ class ZonaTech_User_Auth {
         add_action('wp_ajax_nopriv_zonatech_reset_password', array($this, 'handle_reset_password'));
         add_action('wp_ajax_zonatech_update_profile', array($this, 'handle_update_profile'));
         add_action('wp_ajax_zonatech_change_password', array($this, 'handle_change_password'));
+        add_action('wp_ajax_zonatech_upload_avatar', array($this, 'handle_upload_avatar'));
+    }
+    
+    /**
+     * Handle avatar upload
+     */
+    public function handle_upload_avatar() {
+        check_ajax_referer('zonatech_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'You must be logged in.'));
+            return;
+        }
+        
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            wp_send_json_error(array('message' => 'No file uploaded or upload error.'));
+            return;
+        }
+        
+        $file = $_FILES['avatar'];
+        $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
+        
+        if (!in_array($file['type'], $allowed_types)) {
+            wp_send_json_error(array('message' => 'Invalid file type. Only JPG, PNG, GIF and WebP allowed.'));
+            return;
+        }
+        
+        // Max 2MB
+        if ($file['size'] > 2 * 1024 * 1024) {
+            wp_send_json_error(array('message' => 'File too large. Maximum size is 2MB.'));
+            return;
+        }
+        
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        
+        $attachment_id = media_handle_upload('avatar', 0);
+        
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(array('message' => $attachment_id->get_error_message()));
+            return;
+        }
+        
+        $user_id = get_current_user_id();
+        
+        // Delete old avatar if exists
+        $old_avatar_id = get_user_meta($user_id, 'zonatech_avatar_id', true);
+        if ($old_avatar_id) {
+            wp_delete_attachment($old_avatar_id, true);
+        }
+        
+        // Save new avatar
+        update_user_meta($user_id, 'zonatech_avatar_id', $attachment_id);
+        
+        $avatar_url = wp_get_attachment_url($attachment_id);
+        
+        wp_send_json_success(array(
+            'message' => 'Avatar updated successfully!',
+            'avatar_url' => $avatar_url
+        ));
     }
     
     /**
@@ -711,6 +772,14 @@ class ZonaTech_User_Auth {
             $user_id
         ));
         
+        // Get custom avatar or default
+        $custom_avatar_id = get_user_meta($user_id, 'zonatech_avatar_id', true);
+        if ($custom_avatar_id) {
+            $avatar_url = wp_get_attachment_url($custom_avatar_id);
+        } else {
+            $avatar_url = get_avatar_url($user_id, array('size' => 150));
+        }
+        
         return array(
             'user' => array(
                 'id' => $user_id,
@@ -719,7 +788,7 @@ class ZonaTech_User_Auth {
                 'display_name' => $user->display_name,
                 'email' => $user->user_email,
                 'phone' => get_user_meta($user_id, 'phone', true),
-                'avatar' => get_avatar_url($user_id, array('size' => 150)),
+                'avatar' => $avatar_url,
                 'registered' => get_user_meta($user_id, 'zonatech_registered', true)
             ),
             'stats' => array(

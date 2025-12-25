@@ -58,7 +58,11 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    text-decoration: none;
+    text-decoration: none !important;
+}
+
+.sidebar-logo::after {
+    display: none !important;
 }
 
 .sidebar-logo:hover {
@@ -117,11 +121,17 @@
     border-radius: var(--radius-md);
     font-size: 0.85rem;
     transition: all var(--transition-fast);
+    text-decoration: none !important;
+}
+
+.sidebar-nav a::after {
+    display: none !important;
 }
 
 .sidebar-nav a:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--zona-white);
+    text-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
 }
 
 .sidebar-nav a.active {
@@ -311,15 +321,21 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     color: var(--zona-white);
-    text-decoration: none;
+    text-decoration: none !important;
     font-size: 0.8rem;
     transition: all var(--transition-normal);
+}
+
+.quick-action-btn::after {
+    display: none !important;
 }
 
 .quick-action-btn:hover {
     background: rgba(139, 92, 246, 0.1);
     border-color: rgba(139, 92, 246, 0.3);
     transform: translateY(-3px);
+    color: var(--zona-white);
+    text-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
 }
 
 .quick-action-btn i {
@@ -449,11 +465,43 @@
     }
 }
 
+.profile-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .profile-avatar {
     width: 100px;
     height: 100px;
     border-radius: 50%;
     border: 3px solid var(--zona-purple);
+    object-fit: cover;
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 32px;
+    height: 32px;
+    background: var(--zona-gradient-purple);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 2px solid var(--zona-black);
+}
+
+.avatar-upload-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+}
+
+.avatar-upload-btn i {
+    color: white;
+    font-size: 0.8rem;
 }
 
 /* Payment History */
@@ -526,8 +574,8 @@
 .mobile-menu-toggle {
     display: none;
     position: fixed;
-    bottom: 20px;
-    left: 20px;
+    top: 20px;
+    right: 20px;
     width: 50px;
     height: 50px;
     background: var(--zona-gradient-purple);
@@ -545,6 +593,45 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+    
+    .dashboard-main {
+        padding: var(--space-md);
+        padding-top: calc(var(--space-xl) + 40px);
+        width: 100%;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .profile-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-avatar-section {
+        grid-column: span 1;
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
     }
 }
 

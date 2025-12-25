@@ -35,7 +35,7 @@ $stats = $user_data['stats'];
                 <img src="<?php echo esc_url($user['avatar']); ?>" alt="Avatar" class="sidebar-user-avatar">
                 <div class="sidebar-user-info">
                     <h4><?php echo esc_html($user['display_name']); ?></h4>
-                    <p class="text-muted"><?php echo esc_html($user['email']); ?></p>
+                    <p class="text-muted"><?php echo esc_html($user['display_name']); ?></p>
                 </div>
             </div>
             
@@ -67,7 +67,7 @@ $stats = $user_data['stats'];
         <main class="dashboard-main">
             <div class="dashboard-header">
                 <div class="dashboard-greeting">
-                    <h1>Welcome, <?php echo esc_html($user['first_name']); ?>! 👋</h1>
+                    <h1>Welcome, <?php echo esc_html($user['first_name']); ?>!</h1>
                     <p class="text-muted">Here's an overview of your account</p>
                 </div>
                 
@@ -170,10 +170,17 @@ $stats = $user_data['stats'];
                     
                     <form id="zonatech-profile-form">
                         <div class="profile-avatar-section">
-                            <img src="<?php echo esc_url($user['avatar']); ?>" alt="Avatar" class="profile-avatar">
+                            <div class="profile-avatar-wrapper">
+                                <img src="<?php echo esc_url($user['avatar']); ?>" alt="Avatar" class="profile-avatar" id="profile-avatar-preview">
+                                <label for="profile-avatar-input" class="avatar-upload-btn">
+                                    <i class="fas fa-camera"></i>
+                                </label>
+                                <input type="file" id="profile-avatar-input" name="avatar" accept="image/*" style="display: none;">
+                            </div>
                             <div>
                                 <h4><?php echo esc_html($user['display_name']); ?></h4>
                                 <p class="text-muted">Member since <?php echo date('F Y', strtotime($user['registered'])); ?></p>
+                                <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> Click camera icon to change photo</p>
                             </div>
                         </div>
                         
@@ -419,5 +426,48 @@ jQuery(document).ready(function($) {
             }
         });
     }
+    
+    // Profile avatar preview
+    $('#profile-avatar-input').on('change', function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#profile-avatar-preview').attr('src', e.target.result);
+                $('.sidebar-user-avatar').attr('src', e.target.result);
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload avatar
+            var formData = new FormData();
+            formData.append('action', 'zonatech_upload_avatar');
+            formData.append('nonce', zonatech_ajax.nonce);
+            formData.append('avatar', file);
+            
+            $.ajax({
+                url: zonatech_ajax.ajax_url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        if (typeof ZonaTechNotify !== 'undefined') {
+                            ZonaTechNotify.success('Profile picture updated!');
+                        }
+                    } else {
+                        if (typeof ZonaTechNotify !== 'undefined') {
+                            ZonaTechNotify.error(response.data.message || 'Failed to upload avatar');
+                        }
+                    }
+                },
+                error: function() {
+                    if (typeof ZonaTechNotify !== 'undefined') {
+                        ZonaTechNotify.error('Failed to upload avatar');
+                    }
+                }
+            });
+        }
+    });
 });
 </script>

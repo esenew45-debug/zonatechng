@@ -106,12 +106,34 @@
 
 .zonatech-container a {
     color: var(--zona-purple-light);
-    text-decoration: none;
-    transition: color var(--transition-fast);
+    text-decoration: none !important;
+    transition: all var(--transition-normal);
 }
 
 .zonatech-container a:hover {
-    color: var(--zona-purple);
+    color: var(--zona-white);
+    text-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+}
+
+/* Link Color Animations */
+.zonatech-container a:not(.btn) {
+    position: relative;
+    text-decoration: none !important;
+}
+
+.zonatech-container a:not(.btn)::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--zona-gradient-purple);
+    transition: width var(--transition-normal);
+}
+
+.zonatech-container a:not(.btn):hover::after {
+    width: 100%;
 }
 
 /* Buttons */
