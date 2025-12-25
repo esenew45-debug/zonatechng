@@ -167,14 +167,57 @@ class ZonaTech_NG {
             delete_option('zonatech_flush_rewrite_rules');
         }
         
+        // Force check pages if accessing verify-email and it doesn't exist
+        $this->check_critical_pages();
+        
         // Ensure pages exist
         $this->ensure_pages_exist();
     }
     
+    /**
+     * Check critical pages and create them immediately if missing
+     */
+    private function check_critical_pages() {
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        
+        // Critical pages that must exist immediately
+        $critical_pages = array(
+            'zonatech-verify-email' => array(
+                'title' => 'Verify Email',
+                'content' => '[zonatech_verify_email]'
+            ),
+            'zonatech-login' => array(
+                'title' => 'Login',
+                'content' => '[zonatech_login]'
+            ),
+            'zonatech-register' => array(
+                'title' => 'Register',
+                'content' => '[zonatech_register]'
+            )
+        );
+        
+        foreach ($critical_pages as $slug => $page) {
+            if (strpos($request_uri, $slug) !== false) {
+                if (!get_page_by_path($slug)) {
+                    // Create the page immediately
+                    wp_insert_post(array(
+                        'post_title' => $page['title'],
+                        'post_name' => $slug,
+                        'post_content' => $page['content'],
+                        'post_status' => 'publish',
+                        'post_type' => 'page'
+                    ));
+                    flush_rewrite_rules();
+                }
+                break;
+            }
+        }
+    }
+    
     private function ensure_pages_exist() {
-        // Only check once per day to avoid performance issues
+        // Check more frequently (every hour) to ensure pages exist
         $last_check = get_option('zonatech_pages_check', 0);
-        if (time() - $last_check < DAY_IN_SECONDS) {
+        if (time() - $last_check < HOUR_IN_SECONDS) {
             return;
         }
         
@@ -189,15 +232,14 @@ class ZonaTech_NG {
             'zonatech-payment'
         );
         
-        $missing_pages = false;
+        $missing_pages = array();
         foreach ($required_pages as $slug) {
             if (!get_page_by_path($slug)) {
-                $missing_pages = true;
-                break;
+                $missing_pages[] = $slug;
             }
         }
         
-        if ($missing_pages) {
+        if (!empty($missing_pages)) {
             $this->create_pages();
             flush_rewrite_rules();
         }
@@ -205,9 +247,22 @@ class ZonaTech_NG {
         update_option('zonatech_pages_check', time());
     }
     
+    /**
+     * Force create pages immediately (called from admin or API)
+     */
+    public function force_create_pages() {
+        delete_option('zonatech_pages_check');
+        $this->create_pages();
+        flush_rewrite_rules();
+    }
+    
     public function activate() {
         ZonaTech_Database::create_tables();
         ZonaTech_Database::seed_sample_data();
+        
+        // Clear the pages check to force recreation
+        delete_option('zonatech_pages_check');
+        
         $this->create_pages();
         flush_rewrite_rules();
         
