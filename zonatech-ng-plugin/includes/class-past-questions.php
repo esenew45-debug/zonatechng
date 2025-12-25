@@ -40,12 +40,123 @@ class ZonaTech_Past_Questions {
         global $wpdb;
         $table_questions = $wpdb->prefix . 'zonatech_questions';
         
+        // First try to get subjects from database
         $subjects = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT subject FROM $table_questions WHERE exam_type = %s ORDER BY subject",
             $exam_type
         ));
         
+        // If no subjects in database, use predefined list
+        if (empty($subjects)) {
+            $subjects = self::get_predefined_subjects($exam_type);
+        }
+        
         wp_send_json_success(array('subjects' => $subjects));
+    }
+    
+    public static function get_predefined_subjects($exam_type) {
+        $jamb_subjects = array(
+            'Use of English',
+            'Mathematics',
+            'Physics',
+            'Chemistry',
+            'Biology',
+            'Agricultural Science',
+            'Economics',
+            'Commerce',
+            'Accounting',
+            'Government',
+            'Geography',
+            'Literature in English',
+            'Christian Religious Studies',
+            'Islamic Religious Studies',
+            'History',
+            'Civic Education',
+            'Home Economics',
+            'Food & Nutrition',
+            'Fine Arts',
+            'Music',
+            'French',
+            'Arabic',
+            'Hausa',
+            'Igbo',
+            'Yoruba',
+            'Physical Education'
+        );
+        
+        $waec_subjects = array(
+            'English Language',
+            'Mathematics',
+            'Civic Education',
+            'Physics',
+            'Chemistry',
+            'Biology',
+            'Agricultural Science',
+            'Further Mathematics',
+            'Health Education',
+            'Economics',
+            'Commerce',
+            'Financial Accounting',
+            'Literature in English',
+            'Government',
+            'History',
+            'Christian Religious Studies',
+            'Islamic Religious Studies',
+            'Geography',
+            'Fine Arts',
+            'Music',
+            'French',
+            'Arabic',
+            'Hausa',
+            'Igbo',
+            'Yoruba',
+            'Data Processing',
+            'Computer Studies',
+            'Animal Husbandry',
+            'Technical Drawing'
+        );
+        
+        $neco_subjects = array(
+            'English Language',
+            'Mathematics',
+            'Civic Education',
+            'Physics',
+            'Chemistry',
+            'Biology',
+            'Agricultural Science',
+            'Further Mathematics',
+            'Health Science',
+            'Economics',
+            'Commerce',
+            'Financial Accounting',
+            'Literature in English',
+            'Government',
+            'History',
+            'Christian Religious Studies',
+            'Islamic Religious Studies',
+            'Geography',
+            'Fine Arts',
+            'Music',
+            'French',
+            'Arabic',
+            'Hausa',
+            'Igbo',
+            'Yoruba',
+            'Computer Studies',
+            'Data Processing',
+            'Marketing',
+            'Home Economics',
+            'Animal Husbandry',
+            'Technical Drawing'
+        );
+        
+        $all_subjects = array(
+            'jamb' => $jamb_subjects,
+            'waec' => $waec_subjects,
+            'neco' => $neco_subjects
+        );
+        
+        return isset($all_subjects[$exam_type]) ? $all_subjects[$exam_type] : array();
     }
     
     public function get_years() {

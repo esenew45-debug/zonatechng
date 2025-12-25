@@ -174,6 +174,9 @@ class ZonaTech_Quiz_System {
             array('result_id' => $result_id, 'score' => $score)
         );
         
+        // Send quiz score email to user
+        $this->send_quiz_score_email($user_id, strtoupper($exam_type), $subject, $year, $score, $correct, $wrong, $total, $this->get_grade($score));
+        
         wp_send_json_success(array(
             'result_id' => $result_id,
             'score' => $score,
@@ -322,6 +325,85 @@ class ZonaTech_Quiz_System {
         if ($score >= 50) return 'Fair performance. Keep studying!';
         if ($score >= 40) return 'You need more practice. Don\'t give up!';
         return 'Keep trying! Review the corrections and try again.';
+    }
+    
+    private function send_quiz_score_email($user_id, $exam_type, $subject, $year, $score, $correct, $wrong, $total, $grade) {
+        $user = get_user_by('ID', $user_id);
+        if (!$user) return;
+        
+        $to = $user->user_email;
+        $first_name = get_user_meta($user_id, 'first_name', true) ?: $user->display_name;
+        
+        $subject_line = "Your {$exam_type} {$subject} Quiz Results - ZonaTech NG";
+        
+        // Determine grade color
+        $grade_color = '#ef4444'; // red
+        if ($score >= 70) $grade_color = '#22c55e'; // green
+        else if ($score >= 50) $grade_color = '#f59e0b'; // yellow
+        
+        $message = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #0a0a0a;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; padding: 40px; margin: 20px 0;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 32px; color: #8b5cf6; margin-bottom: 10px;">🎓</div>
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Quiz Results</h1>
+                    </div>
+                    
+                    <p style="color: #ffffff; font-size: 18px; margin-bottom: 20px;">Hi ' . esc_html($first_name) . ',</p>
+                    
+                    <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                        You have completed the <strong style="color: #ffffff;">' . esc_html($exam_type) . ' ' . esc_html($subject) . ' (' . esc_html($year) . ')</strong> practice quiz. Here are your results:
+                    </p>
+                    
+                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 15px; padding: 30px; margin: 25px 0; text-align: center;">
+                        <div style="font-size: 64px; font-weight: bold; color: ' . $grade_color . '; margin-bottom: 10px;">' . number_format($score, 1) . '%</div>
+                        <div style="font-size: 24px; color: #ffffff; margin-bottom: 5px;">Grade: ' . esc_html($grade) . '</div>
+                        <p style="color: #a1a1aa; margin: 10px 0 0 0;">' . esc_html($this->get_score_message($score)) . '</p>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-around; margin: 25px 0;">
+                        <div style="text-align: center; flex: 1; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px; margin: 0 5px;">
+                            <div style="font-size: 28px; font-weight: bold; color: #22c55e;">' . esc_html($correct) . '</div>
+                            <div style="font-size: 12px; color: #a1a1aa;">Correct</div>
+                        </div>
+                        <div style="text-align: center; flex: 1; padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; margin: 0 5px;">
+                            <div style="font-size: 28px; font-weight: bold; color: #ef4444;">' . esc_html($wrong) . '</div>
+                            <div style="font-size: 12px; color: #a1a1aa;">Wrong</div>
+                        </div>
+                        <div style="text-align: center; flex: 1; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; margin: 0 5px;">
+                            <div style="font-size: 28px; font-weight: bold; color: #8b5cf6;">' . esc_html($total) . '</div>
+                            <div style="font-size: 12px; color: #a1a1aa;">Total</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px;">
+                        <a href="' . site_url('/zonatech-past-questions/') . '" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">
+                            Take Another Quiz
+                        </a>
+                    </div>
+                    
+                    <p style="color: #71717a; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                        Keep practicing to improve your scores!<br>
+                        © ' . date('Y') . ' ZonaTech NG. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>';
+        
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ZonaTech NG <' . ZONATECH_SUPPORT_EMAIL . '>'
+        );
+        
+        wp_mail($to, $subject_line, $message, $headers);
     }
     
     public static function get_user_quiz_stats($user_id) {
