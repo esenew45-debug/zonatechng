@@ -51,8 +51,9 @@ class ZonaTech_Paystack {
         $amount = floatval($_POST['amount'] ?? 0);
         $meta_data = isset($_POST['meta_data']) ? json_decode(stripslashes($_POST['meta_data']), true) : array();
         
-        if (empty($payment_type) || $amount <= 0) {
-            wp_send_json_error(array('message' => 'Invalid payment details.'));
+        if (empty($payment_type)) {
+            wp_send_json_error(array('message' => 'Invalid payment type.'));
+            return;
         }
         
         // Validate amount based on payment type
@@ -62,8 +63,17 @@ class ZonaTech_Paystack {
             'scratch_card' => ZONATECH_SCRATCH_CARD_PRICE
         );
         
-        if (!isset($valid_amounts[$payment_type]) || $amount !== $valid_amounts[$payment_type]) {
-            wp_send_json_error(array('message' => 'Invalid payment amount.'));
+        if (!isset($valid_amounts[$payment_type])) {
+            wp_send_json_error(array('message' => 'Invalid payment type: ' . $payment_type));
+            return;
+        }
+        
+        // Use the server-side amount to prevent tampering (ignore client-side amount)
+        $amount = $valid_amounts[$payment_type];
+        
+        if ($amount <= 0) {
+            wp_send_json_error(array('message' => 'Invalid payment amount for ' . $payment_type));
+            return;
         }
         
         $reference = 'ZONA_' . time() . '_' . wp_rand(1000, 9999);
