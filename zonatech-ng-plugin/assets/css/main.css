@@ -554,6 +554,21 @@ select.form-control option {
     color: var(--zona-white);
 }
 
+.mobile-nav a.mobile-logout-btn {
+    margin-top: auto;
+    background: rgba(239, 68, 68, 0.1);
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.mobile-nav a.mobile-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.mobile-nav a.mobile-logout-btn i {
+    color: #ef4444;
+}
+
 @media (max-width: 768px) {
     .zonatech-nav {
         display: none;

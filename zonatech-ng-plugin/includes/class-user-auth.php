@@ -40,25 +40,163 @@ class ZonaTech_User_Auth {
     }
     
     /**
+     * Get email HTML template with glassmorphism design
+     */
+    private function get_email_template($title, $content, $button_text = '', $button_url = '') {
+        $logo_url = ZONATECH_PLUGIN_URL . 'assets/images/logo.png';
+        
+        $button_html = '';
+        if ($button_text && $button_url) {
+            $button_html = '
+            <a href="' . esc_url($button_url) . '" style="
+                display: inline-block;
+                background: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #6366f1 100%);
+                color: #ffffff !important;
+                text-decoration: none;
+                padding: 14px 32px;
+                border-radius: 50px;
+                font-weight: 600;
+                font-size: 16px;
+                margin: 20px 0;
+                box-shadow: 0 8px 25px rgba(147, 51, 234, 0.4);
+            ">' . esc_html($button_text) . '</a>';
+        }
+        
+        return '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>' . esc_html($title) . '</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: \'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%); min-height: 100vh;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%); padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 0;">
+                            <div style="
+                                background: rgba(147, 51, 234, 0.2);
+                                backdrop-filter: blur(10px);
+                                border-radius: 20px;
+                                padding: 20px 40px;
+                                border: 1px solid rgba(147, 51, 234, 0.3);
+                                display: inline-block;
+                            ">
+                                <span style="font-size: 28px; font-weight: 700; color: #ffffff;">
+                                    🎓 ZonaTech NG
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Card -->
+                    <tr>
+                        <td>
+                            <div style="
+                                background: rgba(255, 255, 255, 0.08);
+                                backdrop-filter: blur(20px);
+                                border-radius: 24px;
+                                padding: 40px;
+                                border: 1px solid rgba(255, 255, 255, 0.1);
+                                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                            ">
+                                <h1 style="
+                                    color: #ffffff;
+                                    font-size: 24px;
+                                    font-weight: 700;
+                                    margin: 0 0 20px 0;
+                                    text-align: center;
+                                ">' . esc_html($title) . '</h1>
+                                
+                                <div style="color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.7;">
+                                    ' . $content . '
+                                </div>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    ' . $button_html . '
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 0;">
+                            <div style="
+                                background: rgba(255, 255, 255, 0.05);
+                                border-radius: 16px;
+                                padding: 25px;
+                                border: 1px solid rgba(255, 255, 255, 0.08);
+                            ">
+                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0 0 10px 0;">
+                                    Need help? Contact us:
+                                </p>
+                                <p style="color: #9333ea; font-size: 14px; margin: 0;">
+                                    📧 ' . ZONATECH_SUPPORT_EMAIL . '<br>
+                                    📱 WhatsApp: ' . ZONATECH_WHATSAPP_NUMBER . '
+                                </p>
+                                <p style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin: 20px 0 0 0;">
+                                    © ' . date('Y') . ' ZonaTech NG. All rights reserved.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>';
+    }
+    
+    /**
      * Send verification email
      */
     private function send_verification_email($email, $first_name, $code) {
         $subject = 'Verify Your Email - ZonaTech NG';
         
-        $message = "Hi $first_name,\n\n";
-        $message .= "Thank you for registering with ZonaTech NG!\n\n";
-        $message .= "Your verification code is:\n\n";
-        $message .= "    $code\n\n";
-        $message .= "Enter this code on the verification page to complete your registration.\n\n";
-        $message .= "This code will expire in 30 minutes.\n\n";
-        $message .= "If you didn't create an account with ZonaTech NG, please ignore this email.\n\n";
-        $message .= "Best regards,\n";
-        $message .= "ZonaTech NG Team\n\n";
-        $message .= "---\n";
-        $message .= "Email: " . ZONATECH_SUPPORT_EMAIL . "\n";
-        $message .= "WhatsApp: " . ZONATECH_WHATSAPP_NUMBER;
+        $content = '
+            <p style="margin: 0 0 15px 0;">Hi <strong>' . esc_html($first_name) . '</strong>,</p>
+            <p style="margin: 0 0 15px 0;">Thank you for registering with ZonaTech NG! 🎉</p>
+            <p style="margin: 0 0 20px 0;">Your verification code is:</p>
+            <div style="
+                background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+                border-radius: 16px;
+                padding: 25px;
+                text-align: center;
+                margin: 20px 0;
+            ">
+                <span style="
+                    font-size: 36px;
+                    font-weight: 700;
+                    color: #ffffff;
+                    letter-spacing: 8px;
+                    font-family: monospace;
+                ">' . esc_html($code) . '</span>
+            </div>
+            <p style="margin: 20px 0 15px 0;">Enter this code on the verification page to complete your registration.</p>
+            <p style="
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 14px;
+                margin: 15px 0 0 0;
+                padding: 15px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 10px;
+            ">
+                ⏰ This code will expire in 30 minutes.
+            </p>
+        ';
         
-        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        $message = $this->get_email_template($subject, $content);
+        
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ZonaTech NG <support@zonatechng.com>'
+        );
         
         return wp_mail($email, $subject, $message, $headers);
     }
@@ -69,22 +207,29 @@ class ZonaTech_User_Auth {
     private function send_approval_email($email, $first_name) {
         $subject = 'Account Approved - Welcome to ZonaTech NG!';
         
-        $message = "Hi $first_name,\n\n";
-        $message .= "Great news! Your ZonaTech NG account has been verified and approved.\n\n";
-        $message .= "You can now log in and access:\n";
-        $message .= "• JAMB, WAEC, and NECO past questions\n";
-        $message .= "• Scratch cards and PINs\n";
-        $message .= "• NIN verification services\n";
-        $message .= "• And much more!\n\n";
-        $message .= "Login here: " . home_url('/zonatech-login/') . "\n\n";
-        $message .= "If you have any questions, feel free to contact us.\n\n";
-        $message .= "Best regards,\n";
-        $message .= "ZonaTech NG Team\n\n";
-        $message .= "---\n";
-        $message .= "Email: " . ZONATECH_SUPPORT_EMAIL . "\n";
-        $message .= "WhatsApp: " . ZONATECH_WHATSAPP_NUMBER;
+        $content = '
+            <p style="margin: 0 0 15px 0;">Hi <strong>' . esc_html($first_name) . '</strong>,</p>
+            <p style="margin: 0 0 15px 0;">Great news! Your ZonaTech NG account has been verified and approved. 🎉</p>
+            <p style="margin: 0 0 20px 0;">You can now log in and access:</p>
+            <ul style="
+                list-style: none;
+                padding: 0;
+                margin: 0 0 20px 0;
+            ">
+                <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.9);">✅ JAMB, WAEC, and NECO past questions</li>
+                <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.9);">✅ Scratch cards and PINs</li>
+                <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.9);">✅ NIN verification services</li>
+                <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.9);">✅ And much more!</li>
+            </ul>
+            <p style="margin: 20px 0 0 0;">Click the button below to log in to your account:</p>
+        ';
         
-        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        $message = $this->get_email_template($subject, $content, 'Login Now', home_url('/zonatech-login/'));
+        
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ZonaTech NG <support@zonatechng.com>'
+        );
         
         return wp_mail($email, $subject, $message, $headers);
     }

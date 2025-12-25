@@ -40,8 +40,9 @@ if (!defined('ABSPATH')) exit;
                 <a href="#scratch-cards"><i class="fas fa-credit-card"></i> Scratch Cards</a>
                 <?php if (is_user_logged_in()): ?>
                     <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="<?php echo wp_logout_url(site_url()); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 <?php else: ?>
-                    <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo site_url('/zonatech-login/'); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-sign-in-alt"></i> Login</a>
                     <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Get Started</a>
                 <?php endif; ?>
             </nav>
@@ -75,6 +76,7 @@ if (!defined('ABSPATH')) exit;
             <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
             <?php if (is_user_logged_in()): ?>
                 <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="<?php echo wp_logout_url(site_url()); ?>" class="mobile-logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
             <?php else: ?>
                 <a href="<?php echo site_url('/zonatech-login/'); ?>"><i class="fas fa-sign-in-alt"></i> Login</a>
                 <a href="<?php echo site_url('/zonatech-register/'); ?>"><i class="fas fa-user-plus"></i> Create Account</a>
@@ -94,9 +96,15 @@ if (!defined('ABSPATH')) exit;
                 <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="btn btn-primary btn-lg">
                     <i class="fas fa-book-open"></i> Explore Past Questions
                 </a>
-                <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-secondary btn-lg">
-                    <i class="fas fa-user-plus"></i> Create Account
-                </a>
+                <?php if (is_user_logged_in()): ?>
+                    <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-credit-card"></i> Buy Scratch Cards
+                    </a>
+                <?php else: ?>
+                    <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </a>
+                <?php endif; ?>
             </div>
         </section>
         
