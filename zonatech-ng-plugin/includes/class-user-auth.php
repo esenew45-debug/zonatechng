@@ -162,9 +162,13 @@ class ZonaTech_User_Auth {
             wp_send_json_error(array('message' => 'Failed to send verification email. Please try again.'));
         }
         
+        // Build the redirect URL to the verification page
+        $redirect_url = home_url('/zonatech-verify-email/') . '?pending_id=' . $pending_user_id . '&email=' . urlencode($email);
+        
         wp_send_json_success(array(
             'message' => 'Verification code sent to your email!',
-            'pending_user_id' => $pending_user_id
+            'pending_user_id' => $pending_user_id,
+            'redirect' => $redirect_url
         ));
     }
     
@@ -291,24 +295,33 @@ class ZonaTech_User_Auth {
     private function create_pending_users_table() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'zonatech_pending_users';
-        $charset_collate = $wpdb->get_charset_collate();
         
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            first_name varchar(100) NOT NULL,
-            last_name varchar(100) NOT NULL,
-            email varchar(100) NOT NULL,
-            phone varchar(20) DEFAULT '',
-            password varchar(255) NOT NULL,
-            verification_code varchar(6) NOT NULL,
-            expires_at datetime NOT NULL,
-            created_at datetime NOT NULL,
-            PRIMARY KEY (id),
-            UNIQUE KEY email (email)
-        ) $charset_collate;";
+        // Check if table already exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
         
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        if (!$table_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            
+            $sql = "CREATE TABLE $table_name (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                first_name varchar(100) NOT NULL,
+                last_name varchar(100) NOT NULL,
+                email varchar(100) NOT NULL,
+                phone varchar(20) DEFAULT '',
+                password varchar(255) NOT NULL,
+                verification_code varchar(6) NOT NULL,
+                expires_at datetime NOT NULL,
+                created_at datetime NOT NULL,
+                PRIMARY KEY (id),
+                UNIQUE KEY email (email)
+            ) $charset_collate;";
+            
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            
+            // Log table creation for debugging
+            error_log('ZonaTech: Created pending_users table');
+        }
     }
     
     public function handle_login() {
