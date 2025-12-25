@@ -43,7 +43,8 @@ define('ZONATECH_SUPPORT_EMAIL', 'support@zonatechng.com');
 
 // Price Constants (in Naira)
 define('ZONATECH_SUBJECT_PRICE', 5000);
-define('ZONATECH_NIN_SLIP_PRICE', 2000);
+define('ZONATECH_NIN_SLIP_PRICE', 2000);          // Premium NIN Slip
+define('ZONATECH_NIN_STANDARD_SLIP_PRICE', 1000); // Standard NIN Slip
 define('ZONATECH_SCRATCH_CARD_PRICE', 5000);
 
 // Session timeout (3 days in seconds)
@@ -79,6 +80,7 @@ class ZonaTech_NG {
         require_once ZONATECH_PLUGIN_DIR . 'includes/class-activity-log.php';
         require_once ZONATECH_PLUGIN_DIR . 'includes/class-ajax-handlers.php';
         require_once ZONATECH_PLUGIN_DIR . 'includes/class-shortcodes.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-feedback.php';
         require_once ZONATECH_PLUGIN_DIR . 'admin/class-admin.php';
     }
     
@@ -164,6 +166,7 @@ class ZonaTech_NG {
         ZonaTech_Activity_Log::get_instance();
         ZonaTech_Ajax_Handlers::get_instance();
         ZonaTech_Shortcodes::get_instance();
+        ZonaTech_Feedback::get_instance();
         
         if (is_admin()) {
             ZonaTech_Admin::get_instance();
@@ -319,6 +322,10 @@ class ZonaTech_NG {
             'zonatech-payment' => array(
                 'title' => 'Payment',
                 'content' => '[zonatech_payment]'
+            ),
+            'zonatech-feedback' => array(
+                'title' => 'Feedback',
+                'content' => '[zonatech_feedback]'
             )
         );
         
@@ -378,6 +385,7 @@ class ZonaTech_NG {
             'paystack_configured' => !empty(ZONATECH_PAYSTACK_PUBLIC_KEY),
             'subject_price' => ZONATECH_SUBJECT_PRICE,
             'nin_price' => ZONATECH_NIN_SLIP_PRICE,
+            'nin_standard_price' => ZONATECH_NIN_STANDARD_SLIP_PRICE,
             'scratch_card_price' => ZONATECH_SCRATCH_CARD_PRICE,
             'whatsapp_number' => ZONATECH_WHATSAPP_NUMBER,
             'support_email' => ZONATECH_SUPPORT_EMAIL,

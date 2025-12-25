@@ -91,6 +91,24 @@ class ZonaTech_Admin {
         
         add_submenu_page(
             'zonatech-ng',
+            'Users',
+            'Users',
+            'manage_options',
+            'zonatech-users',
+            array($this, 'render_users')
+        );
+        
+        add_submenu_page(
+            'zonatech-ng',
+            'Feedback',
+            'Feedback',
+            'manage_options',
+            'zonatech-feedback',
+            array($this, 'render_feedback')
+        );
+        
+        add_submenu_page(
+            'zonatech-ng',
             'Settings',
             'Settings',
             'manage_options',
@@ -146,6 +164,14 @@ class ZonaTech_Admin {
     
     public function render_activity() {
         include ZONATECH_PLUGIN_DIR . 'admin/views/activity.php';
+    }
+    
+    public function render_users() {
+        include ZONATECH_PLUGIN_DIR . 'admin/views/users.php';
+    }
+    
+    public function render_feedback() {
+        include ZONATECH_PLUGIN_DIR . 'admin/views/feedback.php';
     }
     
     public function render_settings() {

@@ -104,18 +104,39 @@ $is_guest = !is_user_logged_in();
         <!-- Pricing Info -->
         <div class="glass-card mt-3" style="max-width: 600px; margin: 2rem auto;">
             <h3 class="text-white"><i class="fas fa-tag"></i> Service Pricing</h3>
-            <div class="payment-card">
+            
+            <!-- Standard Slip -->
+            <div class="payment-card" style="margin-bottom: 1rem; cursor: pointer;" id="standard-slip-option" onclick="selectSlipType('standard')">
                 <div class="payment-info">
-                    <div class="payment-icon">
+                    <div class="payment-icon" style="background: rgba(139, 92, 246, 0.2);">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="payment-details">
+                        <h4 class="text-white">Standard NIN Slip Download</h4>
+                        <p class="text-muted">Basic PDF slip with essential details</p>
+                    </div>
+                </div>
+                <div class="payment-amount" style="color: #4ade80;">₦<?php echo number_format(ZONATECH_NIN_STANDARD_SLIP_PRICE); ?></div>
+            </div>
+            
+            <!-- Premium Slip -->
+            <div class="payment-card" style="cursor: pointer;" id="premium-slip-option" onclick="selectSlipType('premium')">
+                <div class="payment-info">
+                    <div class="payment-icon" style="background: rgba(234, 179, 8, 0.2);">
                         <i class="fas fa-file-pdf"></i>
                     </div>
                     <div class="payment-details">
-                        <h4 class="text-white">Premium NIN Slip Download</h4>
-                        <p class="text-muted">High-quality PDF with full details</p>
+                        <h4 class="text-white"><i class="fas fa-crown" style="color: #eab308;"></i> Premium NIN Slip Download</h4>
+                        <p class="text-muted">High-quality PDF with full details & photo</p>
                     </div>
                 </div>
-                <div class="payment-amount">₦<?php echo number_format(ZONATECH_NIN_SLIP_PRICE); ?></div>
+                <div class="payment-amount" style="color: #eab308;">₦<?php echo number_format(ZONATECH_NIN_SLIP_PRICE); ?></div>
             </div>
+            
+            <input type="hidden" id="selected-slip-type" value="standard">
+            <p class="text-muted text-center" style="margin-top: 1rem; font-size: 0.85rem;">
+                <i class="fas fa-info-circle"></i> Click on a plan to select it before verifying your NIN
+            </p>
         </div>
         
         <!-- Features -->
@@ -220,5 +241,33 @@ jQuery(document).ready(function($) {
     mobileNav.find('a').on('click', function() {
         closeMobileNav();
     });
+});
+
+// Slip type selection
+function selectSlipType(type) {
+    document.getElementById('selected-slip-type').value = type;
+    
+    var standardOption = document.getElementById('standard-slip-option');
+    var premiumOption = document.getElementById('premium-slip-option');
+    
+    // Remove selection from both
+    standardOption.style.border = '1px solid rgba(255,255,255,0.1)';
+    premiumOption.style.border = '1px solid rgba(255,255,255,0.1)';
+    
+    // Add selection to chosen option
+    if (type === 'standard') {
+        standardOption.style.border = '2px solid #4ade80';
+        standardOption.style.boxShadow = '0 0 15px rgba(74, 222, 128, 0.3)';
+        premiumOption.style.boxShadow = 'none';
+    } else {
+        premiumOption.style.border = '2px solid #eab308';
+        premiumOption.style.boxShadow = '0 0 15px rgba(234, 179, 8, 0.3)';
+        standardOption.style.boxShadow = 'none';
+    }
+}
+
+// Initialize default selection
+document.addEventListener('DOMContentLoaded', function() {
+    selectSlipType('standard');
 });
 </script>

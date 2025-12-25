@@ -28,6 +28,7 @@ class ZonaTech_Shortcodes {
         add_shortcode('zonatech_scratch_cards', array($this, 'render_scratch_cards'));
         add_shortcode('zonatech_payment', array($this, 'render_payment'));
         add_shortcode('zonatech_homepage', array($this, 'render_homepage'));
+        add_shortcode('zonatech_feedback', array($this, 'render_feedback'));
     }
     
     /**
@@ -136,6 +137,12 @@ class ZonaTech_Shortcodes {
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/homepage.php';
+        return ob_get_clean();
+    }
+    
+    public function render_feedback() {
+        ob_start();
+        include ZONATECH_PLUGIN_DIR . 'templates/feedback.php';
         return ob_get_clean();
     }
 }

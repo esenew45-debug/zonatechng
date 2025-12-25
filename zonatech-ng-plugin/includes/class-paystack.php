@@ -60,6 +60,7 @@ class ZonaTech_Paystack {
         $valid_amounts = array(
             'subject' => ZONATECH_SUBJECT_PRICE,
             'nin_slip' => ZONATECH_NIN_SLIP_PRICE,
+            'nin_standard_slip' => ZONATECH_NIN_STANDARD_SLIP_PRICE,
             'scratch_card' => ZONATECH_SCRATCH_CARD_PRICE
         );
         
@@ -257,6 +258,23 @@ class ZonaTech_Paystack {
                     )
                 );
                 break;
+                
+            case 'nin_standard_slip':
+                // Process NIN standard slip request
+                $table_nin = $wpdb->prefix . 'zonatech_nin_requests';
+                $wpdb->update(
+                    $table_nin,
+                    array(
+                        'status' => 'paid',
+                        'purchase_id' => $purchase->id
+                    ),
+                    array(
+                        'user_id' => $purchase->user_id,
+                        'nin_number' => $meta_data['nin_number'] ?? '',
+                        'status' => 'pending'
+                    )
+                );
+                break;
         }
     }
     
@@ -365,6 +383,8 @@ class ZonaTech_Paystack {
                 return sprintf('%s Scratch Card/PIN', strtoupper($meta_data['card_type'] ?? ''));
             case 'nin_slip':
                 return 'Premium NIN Slip';
+            case 'nin_standard_slip':
+                return 'Standard NIN Slip';
             default:
                 return 'ZonaTech Purchase';
         }

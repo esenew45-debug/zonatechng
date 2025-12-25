@@ -67,6 +67,7 @@ class ZonaTech_NIN_Service {
         }
         
         $nin = sanitize_text_field($_POST['nin'] ?? '');
+        $slip_type = sanitize_text_field($_POST['slip_type'] ?? 'standard');
         
         if (empty($nin)) {
             wp_send_json_error(array('message' => 'NIN number is required.'));
@@ -98,6 +99,10 @@ class ZonaTech_NIN_Service {
             wp_send_json_error(array('message' => 'You already have a pending request for this NIN.'));
         }
         
+        // Determine payment type and amount based on slip type
+        $payment_type = ($slip_type === 'premium') ? 'nin_slip' : 'nin_standard_slip';
+        $amount = ($slip_type === 'premium') ? ZONATECH_NIN_SLIP_PRICE : ZONATECH_NIN_STANDARD_SLIP_PRICE;
+        
         // Create new request
         $wpdb->insert($table_nin, array(
             'user_id' => $user_id,
@@ -107,17 +112,18 @@ class ZonaTech_NIN_Service {
         
         $request_id = $wpdb->insert_id;
         
-        ZonaTech_Activity_Log::log($user_id, 'nin_slip_request', 'Premium NIN slip requested');
+        ZonaTech_Activity_Log::log($user_id, 'nin_slip_request', ucfirst($slip_type) . ' NIN slip requested');
         
         wp_send_json_success(array(
-            'message' => 'NIN slip request created. Please complete payment.',
+            'message' => ucfirst($slip_type) . ' NIN slip request created. Please complete payment.',
             'request_id' => $request_id,
             'require_payment' => true,
-            'payment_type' => 'nin_slip',
-            'amount' => ZONATECH_NIN_SLIP_PRICE,
+            'payment_type' => $payment_type,
+            'amount' => $amount,
             'meta_data' => array(
                 'nin_number' => $nin,
-                'request_id' => $request_id
+                'request_id' => $request_id,
+                'slip_type' => $slip_type
             )
         ));
     }

@@ -343,6 +343,9 @@ if (!defined('ABSPATH')) exit;
                     <a href="<?php echo site_url('/zonatech-nin-service/'); ?>">
                         <i class="fas fa-id-card"></i> NIN Service
                     </a>
+                    <a href="<?php echo site_url('/zonatech-feedback/'); ?>">
+                        <i class="fas fa-comment-dots"></i> Feedback
+                    </a>
                 </div>
                 
                 <div class="footer-social">
