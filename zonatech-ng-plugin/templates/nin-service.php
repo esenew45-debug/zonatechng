@@ -62,14 +62,6 @@ $is_guest = !is_user_logged_in();
             <?php endif; ?>
         </nav>
         
-        <!-- Page Header -->
-        <div class="section">
-            <div class="section-header">
-                <h2 class="text-white"><i class="fas fa-id-card"></i> NIN Service</h2>
-                <p class="text-muted">Retrieve your NIN number and download your premium NIN slip</p>
-            </div>
-        </div>
-        
         <?php if ($is_guest): ?>
         <!-- Guest User Prompt -->
         <div class="glass-card glass-effect-purple" style="max-width: 600px; margin: 0 auto 2rem; text-align: center;">

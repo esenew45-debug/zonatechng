@@ -61,14 +61,8 @@ if (!defined('ABSPATH')) exit;
             <?php endif; ?>
         </nav>
         
-        <!-- Page Header -->
-        <div class="section">
-            <div class="section-header">
-                <h2 class="text-white"><i class="fas fa-book-open"></i> Past Questions</h2>
-                <p class="text-muted">Access JAMB, WAEC, and NECO past questions from 2010 till date. Practice and prepare for your exams!</p>
-            </div>
-            
-            <!-- Exam Type Cards -->
+        <!-- Exam Type Cards -->
+        <div class="section" style="margin-top: 1rem;">
             <div class="cards-grid mb-3">
                 <?php foreach ($exam_types as $type => $exam): ?>
                     <div class="service-card animate-card">
