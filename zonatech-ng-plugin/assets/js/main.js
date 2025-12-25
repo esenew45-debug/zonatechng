@@ -115,17 +115,25 @@
         // Notifications
         initNotifications: function() {
             window.ZonaTechNotify = {
-                show: function(message, type = 'info', duration = 3000) {
+                show: function(message, type = 'info', duration = 4000) {
                     const container = $('#zonatech-notifications');
                     if (!container.length) {
-                        $('body').append('<div id="zonatech-notifications" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>');
+                        $('body').append('<div id="zonatech-notifications" style="position: fixed; top: 20px; right: 20px; z-index: 99999;"></div>');
                     }
                     
                     const notification = $(`
-                        <div class="glass-effect notification-enter" style="padding: 1rem; margin-bottom: 0.5rem; border-radius: 0.5rem; max-width: 350px;">
+                        <div class="zonatech-notification notification-enter" style="
+                            padding: 1rem 1.25rem; 
+                            margin-bottom: 0.75rem; 
+                            border-radius: 0.75rem; 
+                            max-width: 400px;
+                            background: ${this.getBgColor(type)};
+                            border: 2px solid ${this.getBorderColor(type)};
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px ${this.getGlowColor(type)};
+                        ">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <i class="fas ${this.getIcon(type)}" style="color: ${this.getColor(type)};"></i>
-                                <span style="font-size: 0.875rem;">${message}</span>
+                                <i class="fas ${this.getIcon(type)}" style="color: ${this.getColor(type)}; font-size: 1.25rem;"></i>
+                                <span style="font-size: 0.95rem; font-weight: 600; color: ${this.getColor(type)}; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${message}</span>
                             </div>
                         </div>
                     `);
@@ -150,10 +158,40 @@
                 
                 getColor: function(type) {
                     const colors = {
-                        success: '#22c55e',
-                        error: '#ef4444',
-                        warning: '#f59e0b',
-                        info: '#3b82f6'
+                        success: '#4ade80',
+                        error: '#f87171',
+                        warning: '#fbbf24',
+                        info: '#60a5fa'
+                    };
+                    return colors[type] || colors.info;
+                },
+                
+                getBgColor: function(type) {
+                    const colors = {
+                        success: 'rgba(34, 197, 94, 0.15)',
+                        error: 'rgba(239, 68, 68, 0.15)',
+                        warning: 'rgba(245, 158, 11, 0.15)',
+                        info: 'rgba(59, 130, 246, 0.15)'
+                    };
+                    return colors[type] || colors.info;
+                },
+                
+                getBorderColor: function(type) {
+                    const colors = {
+                        success: 'rgba(34, 197, 94, 0.5)',
+                        error: 'rgba(239, 68, 68, 0.5)',
+                        warning: 'rgba(245, 158, 11, 0.5)',
+                        info: 'rgba(59, 130, 246, 0.5)'
+                    };
+                    return colors[type] || colors.info;
+                },
+                
+                getGlowColor: function(type) {
+                    const colors = {
+                        success: 'rgba(34, 197, 94, 0.3)',
+                        error: 'rgba(239, 68, 68, 0.3)',
+                        warning: 'rgba(245, 158, 11, 0.3)',
+                        info: 'rgba(59, 130, 246, 0.3)'
                     };
                     return colors[type] || colors.info;
                 }

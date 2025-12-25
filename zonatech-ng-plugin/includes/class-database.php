@@ -186,23 +186,105 @@ class ZonaTech_Database {
             return;
         }
         
-        $exam_types = array('jamb', 'waec', 'neco');
-        $subjects = array(
-            'English Language',
+        // Comprehensive subjects for each exam type
+        $jamb_subjects = array(
+            'Use of English',
             'Mathematics',
             'Physics',
             'Chemistry',
             'Biology',
+            'Agricultural Science',
             'Economics',
-            'Government',
-            'Literature in English',
             'Commerce',
             'Accounting',
+            'Government',
             'Geography',
+            'Literature in English',
+            'Christian Religious Studies',
+            'Islamic Religious Studies',
+            'History',
+            'Civic Education',
+            'Home Economics',
+            'Fine Arts',
+            'Music',
+            'French',
+            'Arabic',
+            'Hausa',
+            'Igbo',
+            'Yoruba',
+            'Physical Education'
+        );
+        
+        $waec_subjects = array(
+            'English Language',
+            'Mathematics',
+            'Civic Education',
+            'Physics',
+            'Chemistry',
+            'Biology',
             'Agricultural Science',
             'Further Mathematics',
-            'Computer Science',
-            'Civic Education'
+            'Health Education',
+            'Economics',
+            'Commerce',
+            'Financial Accounting',
+            'Literature in English',
+            'Government',
+            'History',
+            'Christian Religious Studies',
+            'Islamic Religious Studies',
+            'Geography',
+            'Fine Arts',
+            'Music',
+            'French',
+            'Arabic',
+            'Hausa',
+            'Igbo',
+            'Yoruba',
+            'Data Processing',
+            'Computer Studies',
+            'Animal Husbandry',
+            'Technical Drawing'
+        );
+        
+        $neco_subjects = array(
+            'English Language',
+            'Mathematics',
+            'Civic Education',
+            'Physics',
+            'Chemistry',
+            'Biology',
+            'Agricultural Science',
+            'Further Mathematics',
+            'Health Science',
+            'Economics',
+            'Commerce',
+            'Financial Accounting',
+            'Literature in English',
+            'Government',
+            'History',
+            'Christian Religious Studies',
+            'Islamic Religious Studies',
+            'Geography',
+            'Fine Arts',
+            'Music',
+            'French',
+            'Arabic',
+            'Hausa',
+            'Igbo',
+            'Yoruba',
+            'Computer Studies',
+            'Data Processing',
+            'Marketing',
+            'Home Economics',
+            'Animal Husbandry',
+            'Technical Drawing'
+        );
+        
+        $exam_subjects = array(
+            'jamb' => $jamb_subjects,
+            'waec' => $waec_subjects,
+            'neco' => $neco_subjects
         );
         
         $sample_questions = array(
@@ -254,16 +336,17 @@ class ZonaTech_Database {
         );
         
         // Insert sample questions using batch inserts for better performance
-        // Only insert a limited set of sample data for demonstration
-        $limited_subjects = array_slice($subjects, 0, 3); // First 3 subjects only
-        $limited_years = array(2022, 2023, 2024); // Last 3 years only
+        // Insert data for all subjects and years from 2010 to present
+        $years = range(2010, date('Y'));
         
         $values = array();
         $placeholders = array();
         
-        foreach ($exam_types as $exam_type) {
-            foreach ($limited_subjects as $subject) {
-                foreach ($limited_years as $year) {
+        foreach ($exam_subjects as $exam_type => $subjects) {
+            // Use 3 core subjects to keep data manageable while still having good coverage
+            $core_subjects = array_slice($subjects, 0, 5);
+            foreach ($core_subjects as $subject) {
+                foreach ($years as $year) {
                     foreach ($sample_questions as $question) {
                         $values[] = $exam_type;
                         $values[] = $subject;
@@ -282,6 +365,39 @@ class ZonaTech_Database {
         }
         
         // Batch insert all questions
+        if (!empty($placeholders)) {
+            $sql = "INSERT INTO $table_questions 
+                    (exam_type, subject, year, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation) 
+                    VALUES " . implode(', ', $placeholders);
+            $wpdb->query($wpdb->prepare($sql, $values));
+        }
+        
+        // Also add entries for all other subjects (with just 2024 year for demonstration)
+        // This ensures all subjects appear in the dropdown
+        $values = array();
+        $placeholders = array();
+        
+        foreach ($exam_subjects as $exam_type => $subjects) {
+            // Skip the first 5 subjects already added
+            $remaining_subjects = array_slice($subjects, 5);
+            foreach ($remaining_subjects as $subject) {
+                // Add just one year (2024) with sample questions
+                foreach ($sample_questions as $question) {
+                    $values[] = $exam_type;
+                    $values[] = $subject;
+                    $values[] = 2024;
+                    $values[] = $question['question_text'];
+                    $values[] = $question['option_a'];
+                    $values[] = $question['option_b'];
+                    $values[] = $question['option_c'];
+                    $values[] = $question['option_d'];
+                    $values[] = $question['correct_answer'];
+                    $values[] = $question['explanation'];
+                    $placeholders[] = "(%s, %s, %d, %s, %s, %s, %s, %s, %s, %s)";
+                }
+            }
+        }
+        
         if (!empty($placeholders)) {
             $sql = "INSERT INTO $table_questions 
                     (exam_type, subject, year, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation) 

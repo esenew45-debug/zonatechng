@@ -54,6 +54,12 @@
         initiatePayment: function(paymentType, amount, metaData) {
             const self = this;
             
+            // Check if Paystack is configured
+            if (!zonatech_ajax.paystack_configured) {
+                ZonaTechNotify.show('Payment system is not configured. Please contact support at ' + zonatech_ajax.support_email, 'error', 6000);
+                return;
+            }
+            
             // Show loading
             ZonaTechNotify.show('Initializing payment...', 'info');
             
@@ -71,11 +77,12 @@
                     if (response.success) {
                         self.openPaystack(response.data);
                     } else {
-                        ZonaTechNotify.show(response.data.message, 'error');
+                        ZonaTechNotify.show(response.data.message || 'Payment initialization failed. Please try again.', 'error', 5000);
                     }
                 },
-                error: function() {
-                    ZonaTechNotify.show('Failed to initialize payment. Please try again.', 'error');
+                error: function(xhr, status, error) {
+                    console.error('Payment initialization error:', error);
+                    ZonaTechNotify.show('Failed to initialize payment. Please check your connection and try again.', 'error', 5000);
                 }
             });
         },
@@ -84,22 +91,39 @@
         openPaystack: function(data) {
             const self = this;
             
-            const handler = PaystackPop.setup({
-                key: data.public_key,
-                email: data.email,
-                amount: data.amount,
-                currency: data.currency,
-                ref: data.reference,
-                metadata: data.metadata,
-                onClose: function() {
-                    ZonaTechNotify.show('Payment window closed.', 'info');
-                },
-                callback: function(response) {
-                    self.verifyPayment(response.reference);
-                }
-            });
+            // Check if PaystackPop is available
+            if (typeof PaystackPop === 'undefined') {
+                ZonaTechNotify.show('Payment gateway is loading. Please wait and try again.', 'warning', 4000);
+                return;
+            }
             
-            handler.openIframe();
+            // Check if we have a valid public key
+            if (!data.public_key || data.public_key.length < 10) {
+                ZonaTechNotify.show('Payment configuration error. Please contact support.', 'error', 5000);
+                return;
+            }
+            
+            try {
+                const handler = PaystackPop.setup({
+                    key: data.public_key,
+                    email: data.email,
+                    amount: data.amount,
+                    currency: data.currency,
+                    ref: data.reference,
+                    metadata: data.metadata,
+                    onClose: function() {
+                        ZonaTechNotify.show('Payment window closed.', 'info');
+                    },
+                    callback: function(response) {
+                        self.verifyPayment(response.reference);
+                    }
+                });
+                
+                handler.openIframe();
+            } catch (error) {
+                console.error('Paystack error:', error);
+                ZonaTechNotify.show('Failed to open payment window. Please try again.', 'error', 5000);
+            }
         },
         
         // Verify payment

@@ -35,6 +35,13 @@ class ZonaTech_Paystack {
         
         if (!is_user_logged_in()) {
             wp_send_json_error(array('message' => 'Please login to make payment.'));
+            return;
+        }
+        
+        // Check if Paystack is configured
+        if (empty($this->public_key) || empty($this->secret_key)) {
+            wp_send_json_error(array('message' => 'Payment system is not configured. Please contact support at ' . ZONATECH_SUPPORT_EMAIL));
+            return;
         }
         
         $user_id = get_current_user_id();
