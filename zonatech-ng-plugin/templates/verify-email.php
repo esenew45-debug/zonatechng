@@ -89,6 +89,9 @@ jQuery(document).ready(function($) {
         var $btn = $form.find('button[type="submit"]');
         var originalText = $btn.html();
         var pendingUserId = $('#pending_user_id').val();
+        var verificationCode = $form.find('[name="verification_code"]').val();
+        
+        console.log('Verifying email for pending_user_id:', pendingUserId, 'code:', verificationCode);
         
         if (!pendingUserId || pendingUserId === '0') {
             if (typeof ZonaTechNotify !== 'undefined') {
@@ -100,7 +103,24 @@ jQuery(document).ready(function($) {
             return;
         }
         
+        if (!verificationCode || verificationCode.length !== 6) {
+            if (typeof ZonaTechNotify !== 'undefined') {
+                ZonaTechNotify.error('Please enter a valid 6-digit verification code.');
+            } else {
+                alert('Please enter a valid 6-digit verification code.');
+            }
+            return;
+        }
+        
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Verifying...');
+        
+        // Check if zonatech_ajax is defined
+        if (typeof zonatech_ajax === 'undefined') {
+            console.error('zonatech_ajax is not defined');
+            alert('Page configuration error. Please refresh the page and try again.');
+            $btn.prop('disabled', false).html(originalText);
+            return;
+        }
         
         $.ajax({
             url: zonatech_ajax.ajax_url,
@@ -109,35 +129,40 @@ jQuery(document).ready(function($) {
                 action: 'zonatech_verify_email',
                 nonce: zonatech_ajax.nonce,
                 pending_user_id: pendingUserId,
-                verification_code: $form.find('[name="verification_code"]').val()
+                verification_code: verificationCode
             },
             success: function(response) {
-                if (response.success) {
+                console.log('Verification response:', response);
+                if (response && response.success) {
                     // Show success card
                     $('#verification-card').fadeOut(300, function() {
                         $('#success-card').fadeIn(300);
                     });
                     
                     if (typeof ZonaTechNotify !== 'undefined') {
-                        ZonaTechNotify.success(response.data.message);
+                        ZonaTechNotify.success(response.data.message || 'Email verified successfully!');
                     }
                 } else {
+                    var errorMsg = (response && response.data && response.data.message) ? response.data.message : 'Verification failed. Please try again.';
                     if (typeof ZonaTechNotify !== 'undefined') {
-                        ZonaTechNotify.error(response.data.message);
+                        ZonaTechNotify.error(errorMsg);
                     } else {
-                        alert(response.data.message);
+                        alert(errorMsg);
                     }
+                    $btn.prop('disabled', false).html(originalText);
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error, xhr.responseText);
                 if (typeof ZonaTechNotify !== 'undefined') {
                     ZonaTechNotify.error('An error occurred. Please try again.');
                 } else {
                     alert('An error occurred. Please try again.');
                 }
+                $btn.prop('disabled', false).html(originalText);
             },
             complete: function() {
-                $btn.prop('disabled', false).html(originalText);
+                // Don't re-enable button on success (keep it showing spinner until redirect)
             }
         });
     });
@@ -161,6 +186,14 @@ jQuery(document).ready(function($) {
         var $link = $(this);
         $link.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         
+        // Check if zonatech_ajax is defined
+        if (typeof zonatech_ajax === 'undefined') {
+            console.error('zonatech_ajax is not defined');
+            alert('Page configuration error. Please refresh the page.');
+            $link.html('<i class="fas fa-redo"></i> Resend Code');
+            return;
+        }
+        
         $.ajax({
             url: zonatech_ajax.ajax_url,
             type: 'POST',
@@ -170,18 +203,28 @@ jQuery(document).ready(function($) {
                 pending_user_id: pendingUserId
             },
             success: function(response) {
-                if (response.success) {
+                console.log('Resend response:', response);
+                if (response && response.success) {
                     if (typeof ZonaTechNotify !== 'undefined') {
-                        ZonaTechNotify.success(response.data.message);
+                        ZonaTechNotify.success(response.data.message || 'Code sent!');
                     } else {
-                        alert(response.data.message);
+                        alert(response.data.message || 'Code sent!');
                     }
                 } else {
+                    var errorMsg = (response && response.data && response.data.message) ? response.data.message : 'Failed to resend code.';
                     if (typeof ZonaTechNotify !== 'undefined') {
-                        ZonaTechNotify.error(response.data.message);
+                        ZonaTechNotify.error(errorMsg);
                     } else {
-                        alert(response.data.message);
+                        alert(errorMsg);
                     }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                if (typeof ZonaTechNotify !== 'undefined') {
+                    ZonaTechNotify.error('An error occurred. Please try again.');
+                } else {
+                    alert('An error occurred. Please try again.');
                 }
             },
             complete: function() {

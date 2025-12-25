@@ -20,8 +20,11 @@ class ZonaTech_User_Auth {
     
     private function __construct() {
         add_action('wp_ajax_nopriv_zonatech_register', array($this, 'handle_register'));
+        add_action('wp_ajax_zonatech_register', array($this, 'handle_register')); // Also for logged-in users
         add_action('wp_ajax_nopriv_zonatech_verify_email', array($this, 'handle_verify_email'));
+        add_action('wp_ajax_zonatech_verify_email', array($this, 'handle_verify_email')); // Also for logged-in users
         add_action('wp_ajax_nopriv_zonatech_resend_verification', array($this, 'handle_resend_verification'));
+        add_action('wp_ajax_zonatech_resend_verification', array($this, 'handle_resend_verification')); // Also for logged-in users
         add_action('wp_ajax_nopriv_zonatech_login', array($this, 'handle_login'));
         add_action('wp_ajax_zonatech_logout', array($this, 'handle_logout'));
         add_action('wp_ajax_nopriv_zonatech_reset_password', array($this, 'handle_reset_password'));
@@ -178,12 +181,25 @@ class ZonaTech_User_Auth {
         $pending_user_id = intval($_POST['pending_user_id'] ?? 0);
         $verification_code = sanitize_text_field($_POST['verification_code'] ?? '');
         
+        // Log the verification attempt for debugging
+        error_log('ZonaTech: Verification attempt - pending_user_id: ' . $pending_user_id . ', code: ' . $verification_code);
+        
         if (empty($pending_user_id) || empty($verification_code)) {
+            error_log('ZonaTech: Verification failed - missing pending_user_id or code');
             wp_send_json_error(array('message' => 'Verification code is required.'));
+            return;
         }
         
         global $wpdb;
         $table_name = $wpdb->prefix . 'zonatech_pending_users';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+        if (!$table_exists) {
+            error_log('ZonaTech: Verification failed - pending_users table does not exist');
+            wp_send_json_error(array('message' => 'System error. Please contact support.'));
+            return;
+        }
         
         // Get pending registration
         $pending = $wpdb->get_row($wpdb->prepare(
@@ -193,17 +209,34 @@ class ZonaTech_User_Auth {
         ));
         
         if (!$pending) {
-            wp_send_json_error(array('message' => 'Invalid verification code.'));
+            // Try to get just by ID to give better error message
+            $pending_by_id = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $table_name WHERE id = %d",
+                $pending_user_id
+            ));
+            
+            if (!$pending_by_id) {
+                error_log('ZonaTech: Verification failed - no pending registration found for id: ' . $pending_user_id);
+                wp_send_json_error(array('message' => 'Registration not found. Please register again.'));
+            } else {
+                error_log('ZonaTech: Verification failed - invalid code for pending_user_id: ' . $pending_user_id);
+                wp_send_json_error(array('message' => 'Invalid verification code. Please check and try again.'));
+            }
+            return;
         }
         
         // Check if expired
         if (strtotime($pending->expires_at) < time()) {
             $wpdb->delete($table_name, array('id' => $pending_user_id));
+            error_log('ZonaTech: Verification failed - code expired for pending_user_id: ' . $pending_user_id);
             wp_send_json_error(array('message' => 'Verification code has expired. Please register again.'));
+            return;
         }
         
         // Create the actual user
         $username = sanitize_user(strtolower($pending->first_name . $pending->last_name) . wp_rand(100, 999));
+        
+        error_log('ZonaTech: Creating user with username: ' . $username . ', email: ' . $pending->email);
         
         $user_id = wp_insert_user(array(
             'user_login' => $username,
@@ -215,11 +248,12 @@ class ZonaTech_User_Auth {
         ));
         
         if (is_wp_error($user_id)) {
+            error_log('ZonaTech: User creation failed - ' . $user_id->get_error_message());
             wp_send_json_error(array('message' => $user_id->get_error_message()));
+            return;
         }
         
         // Set the password directly (it's already hashed)
-        global $wpdb;
         $wpdb->update(
             $wpdb->users,
             array('user_pass' => $pending->password),
@@ -235,10 +269,14 @@ class ZonaTech_User_Auth {
         $wpdb->delete($table_name, array('id' => $pending_user_id));
         
         // Log activity
-        ZonaTech_Activity_Log::log($user_id, 'registration', 'User registered and verified email');
+        if (class_exists('ZonaTech_Activity_Log')) {
+            ZonaTech_Activity_Log::log($user_id, 'registration', 'User registered and verified email');
+        }
         
         // Send approval email
         $this->send_approval_email($pending->email, $pending->first_name);
+        
+        error_log('ZonaTech: User created successfully - user_id: ' . $user_id);
         
         wp_send_json_success(array(
             'message' => 'Email verified successfully! You can now log in.',
