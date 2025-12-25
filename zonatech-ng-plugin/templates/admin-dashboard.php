@@ -100,6 +100,174 @@ if (isset($_POST['bulk_upload_questions']) && wp_verify_nonce($_POST['bulk_nonce
     }
 }
 
+// Handle DOC/PDF upload with intelligent parsing
+if (isset($_POST['doc_upload_questions']) && wp_verify_nonce($_POST['doc_nonce'], 'zonatech_doc_upload')) {
+    $exam_type = sanitize_text_field($_POST['doc_exam_type']);
+    $subject = sanitize_text_field($_POST['doc_subject']);
+    $year = intval($_POST['doc_year']);
+    
+    if (!empty($_FILES['doc_file']['tmp_name']) && $exam_type && $subject && $year) {
+        $file = $_FILES['doc_file'];
+        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        // Read file content
+        $content = '';
+        
+        if ($file_ext === 'txt') {
+            $content = file_get_contents($file['tmp_name']);
+        } elseif ($file_ext === 'docx') {
+            // Parse DOCX file (ZIP with XML)
+            $zip = new ZipArchive();
+            if ($zip->open($file['tmp_name']) === TRUE) {
+                $xml = $zip->getFromName('word/document.xml');
+                $zip->close();
+                
+                // Extract text from XML
+                $xml = str_replace('</w:p>', "\n", $xml);
+                $xml = str_replace('</w:t>', ' ', $xml);
+                $content = strip_tags($xml);
+            }
+        } elseif ($file_ext === 'doc') {
+            // Basic DOC parsing (works for simple documents)
+            $content = '';
+            $fh = fopen($file['tmp_name'], 'r');
+            if ($fh) {
+                while (!feof($fh)) {
+                    $content .= fread($fh, 8192);
+                }
+                fclose($fh);
+                // Filter out binary/special characters
+                $content = preg_replace('/[^\x20-\x7E\n\r]/', '', $content);
+            }
+        } elseif ($file_ext === 'pdf') {
+            // Basic PDF text extraction
+            $content = file_get_contents($file['tmp_name']);
+            // Extract text between stream tags
+            preg_match_all('/stream\s*(.*?)\s*endstream/s', $content, $matches);
+            $text_parts = array();
+            foreach ($matches[1] as $part) {
+                // Try to decode if it's compressed
+                $decoded = @gzuncompress($part);
+                if ($decoded) {
+                    $part = $decoded;
+                }
+                // Extract text from BT/ET blocks
+                preg_match_all('/\((.*?)\)/', $part, $text_matches);
+                $text_parts = array_merge($text_parts, $text_matches[1]);
+            }
+            $content = implode(' ', $text_parts);
+        }
+        
+        // Clean up content
+        $content = trim($content);
+        $content = preg_replace('/\r\n/', "\n", $content);
+        $content = preg_replace('/\r/', "\n", $content);
+        
+        // Intelligent question parsing
+        $table_questions = $wpdb->prefix . 'zonatech_questions';
+        $success_count = 0;
+        $error_count = 0;
+        
+        // Split by question numbers (1., 2., 3., etc. or Q1, Q2, etc. or Question 1, etc.)
+        $patterns = array(
+            '/(?:^|\n)\s*(\d+)\s*[.\)]\s*/m',  // 1. or 1)
+            '/(?:^|\n)\s*Q\.?\s*(\d+)[.\):\s]/im',  // Q1 or Q.1 or Q1:
+            '/(?:^|\n)\s*Question\s*(\d+)[.\):\s]/im',  // Question 1
+        );
+        
+        $questions_raw = array();
+        foreach ($patterns as $pattern) {
+            $parts = preg_split($pattern, $content, -1, PREG_SPLIT_NO_EMPTY);
+            if (count($parts) > 1) {
+                $questions_raw = $parts;
+                break;
+            }
+        }
+        
+        // If no pattern matched, try splitting by double newlines
+        if (empty($questions_raw)) {
+            $questions_raw = preg_split('/\n\s*\n/', $content);
+        }
+        
+        foreach ($questions_raw as $q_block) {
+            $q_block = trim($q_block);
+            if (strlen($q_block) < 20) continue; // Skip too short blocks
+            
+            // Try to parse question and options
+            $question_text = '';
+            $options = array('A' => '', 'B' => '', 'C' => '', 'D' => '');
+            $correct_answer = '';
+            
+            // Pattern to find options
+            $option_pattern = '/(?:^|\n)\s*([A-D])\s*[.\):\s]\s*(.+?)(?=(?:\n\s*[A-D]\s*[.\):\s])|$)/is';
+            preg_match_all($option_pattern, $q_block, $opt_matches, PREG_SET_ORDER);
+            
+            if (!empty($opt_matches)) {
+                // Extract question text (everything before first option)
+                $first_opt_pos = strpos($q_block, $opt_matches[0][0]);
+                if ($first_opt_pos !== false && $first_opt_pos > 0) {
+                    $question_text = trim(substr($q_block, 0, $first_opt_pos));
+                }
+                
+                // Extract options
+                foreach ($opt_matches as $match) {
+                    $letter = strtoupper($match[1]);
+                    $text = trim($match[2]);
+                    // Remove answer indicator if present
+                    if (preg_match('/\*+\s*$/', $text) || preg_match('/\(correct\)/i', $text) || preg_match('/✓|√/', $text)) {
+                        $correct_answer = $letter;
+                        $text = preg_replace('/\*+\s*$/', '', $text);
+                        $text = preg_replace('/\(correct\)/i', '', $text);
+                        $text = preg_replace('/[✓√]/', '', $text);
+                    }
+                    $options[$letter] = trim($text);
+                }
+            }
+            
+            // Check for answer at the end of block (Answer: A or Ans: B)
+            if (empty($correct_answer)) {
+                if (preg_match('/(?:answer|ans)[:\s]*([A-D])/i', $q_block, $ans_match)) {
+                    $correct_answer = strtoupper($ans_match[1]);
+                }
+            }
+            
+            // Only insert if we have question text and at least 2 options
+            if (!empty($question_text) && strlen($options['A']) > 0 && strlen($options['B']) > 0) {
+                $result = $wpdb->insert($table_questions, array(
+                    'exam_type' => $exam_type,
+                    'subject' => $subject,
+                    'year' => $year,
+                    'question_text' => sanitize_textarea_field($question_text),
+                    'option_a' => sanitize_text_field($options['A']),
+                    'option_b' => sanitize_text_field($options['B']),
+                    'option_c' => sanitize_text_field($options['C']),
+                    'option_d' => sanitize_text_field($options['D']),
+                    'correct_answer' => $correct_answer ?: 'A',
+                    'explanation' => '',
+                    'created_at' => current_time('mysql')
+                ));
+                
+                if ($result) {
+                    $success_count++;
+                } else {
+                    $error_count++;
+                }
+            }
+        }
+        
+        if ($success_count > 0) {
+            $message = "Document parsed: $success_count questions extracted and added successfully!";
+            $message_type = 'success';
+        } else {
+            $message = "Could not parse questions from the document. Please ensure your document follows a clear format with numbered questions and lettered options (A, B, C, D).";
+            $message_type = 'error';
+        }
+    } else {
+        $message = 'Please select a file and fill in all required fields (Exam Type, Subject, Year).';
+        $message_type = 'error';
+    }
+}
+
 // Handle scratch card generation
 if (isset($_POST['generate_cards']) && wp_verify_nonce($_POST['cards_nonce'], 'zonatech_generate_cards')) {
     $card_type = sanitize_text_field($_POST['card_type']);
@@ -1435,6 +1603,7 @@ $current_user = wp_get_current_user();
             <div class="admin-tabs">
                 <button class="admin-tab active" onclick="switchTab('singleQuestion', this)">Single Question</button>
                 <button class="admin-tab" onclick="switchTab('bulkUpload', this)">Bulk Upload (CSV)</button>
+                <button class="admin-tab" onclick="switchTab('docUpload', this)">Document Upload</button>
             </div>
             
             <!-- Single Question Form -->
@@ -1547,6 +1716,84 @@ $current_user = wp_get_current_user();
                     <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">
                         Each row should contain: exam_type (jamb/waec/neco), subject, year, question_text, option_a, option_b, option_c, option_d, correct_answer (A/B/C/D), explanation (optional)
                     </p>
+                </div>
+            </div>
+            
+            <!-- Document Upload Tab -->
+            <div class="tab-content" id="docUpload">
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px;">
+                    <h4 style="margin-bottom: 10px; color: #10b981;"><i class="fas fa-magic"></i> Smart Document Parser</h4>
+                    <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;">
+                        Upload a DOC, DOCX, PDF, or TXT file with questions. The system will intelligently extract questions and options.
+                    </p>
+                </div>
+                
+                <form method="POST" action="" enctype="multipart/form-data">
+                    <?php wp_nonce_field('zonatech_doc_upload', 'doc_nonce'); ?>
+                    
+                    <div class="admin-form-row-3">
+                        <div class="admin-form-group">
+                            <label><i class="fas fa-graduation-cap"></i> Exam Type *</label>
+                            <select name="doc_exam_type" id="docExamType" required>
+                                <option value="">Select Exam</option>
+                                <option value="jamb">JAMB</option>
+                                <option value="waec">WAEC</option>
+                                <option value="neco">NECO</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label><i class="fas fa-book"></i> Subject *</label>
+                            <select name="doc_subject" id="docSubject" required>
+                                <option value="">Select Subject</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label><i class="fas fa-calendar"></i> Year *</label>
+                            <select name="doc_year" required>
+                                <option value="">Select Year</option>
+                                <?php for ($y = date('Y'); $y >= 2010; $y--): ?>
+                                <option value="<?php echo $y; ?>"><?php echo $y; ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="file-upload-area" onclick="document.getElementById('docFile').click();" style="margin-top: 15px;">
+                        <i class="fas fa-file-alt"></i>
+                        <p>Click to upload DOC, DOCX, PDF, or TXT file</p>
+                        <small>Questions will be automatically extracted from your document</small>
+                        <input type="file" name="doc_file" id="docFile" accept=".doc,.docx,.pdf,.txt" onchange="handleDocSelect(this)">
+                    </div>
+                    
+                    <p id="selectedDoc" style="text-align: center; color: #10b981; margin-bottom: 15px;"></p>
+                    
+                    <button type="submit" name="doc_upload_questions" class="admin-form-submit" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fas fa-magic"></i> Parse & Upload Questions
+                    </button>
+                </form>
+                
+                <div style="margin-top: 25px; padding: 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px;">
+                    <h4 style="margin-bottom: 15px; color: #a78bfa;"><i class="fas fa-lightbulb"></i> Document Format Tips</h4>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8;">
+                        <p style="margin-bottom: 10px;">For best results, format your document like this:</p>
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px;">
+                            <p style="color: #f59e0b;">1. What is the capital of Nigeria?</p>
+                            <p>A. Abuja</p>
+                            <p>B. Lagos</p>
+                            <p>C. Kano</p>
+                            <p>D. Ibadan</p>
+                            <p style="color: #10b981;">Answer: A</p>
+                            <br>
+                            <p style="color: #f59e0b;">2. Which river is the longest in Africa?</p>
+                            <p>A. Niger River</p>
+                            <p>B. Nile River *</p>
+                            <p>C. Congo River</p>
+                            <p>D. Zambezi River</p>
+                        </div>
+                        <p style="margin-top: 15px; color: rgba(255,255,255,0.6);">
+                            <strong>Tips:</strong> Mark correct answers with *, (correct), or "Answer: X" after options.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1695,6 +1942,14 @@ $current_user = wp_get_current_user();
             }
         }
         
+        // Document file upload handling
+        function handleDocSelect(input) {
+            const fileName = input.files[0]?.name;
+            if (fileName) {
+                document.getElementById('selectedDoc').textContent = 'Selected: ' + fileName;
+            }
+        }
+        
         // Download CSV template
         function downloadCSVTemplate() {
             const headers = 'exam_type,subject,year,question_text,option_a,option_b,option_c,option_d,correct_answer,explanation\n';
@@ -1717,8 +1972,23 @@ $current_user = wp_get_current_user();
             neco: ['English Language', 'Mathematics', 'Civic Education', 'Physics', 'Chemistry', 'Biology', 'Agricultural Science', 'Further Mathematics', 'Health Science', 'Economics', 'Commerce', 'Financial Accounting', 'Literature in English', 'Government', 'History', 'Christian Religious Studies', 'Islamic Religious Studies', 'Geography', 'Fine Arts', 'Music', 'French', 'Arabic', 'Hausa', 'Igbo', 'Yoruba', 'Computer Studies', 'Data Processing', 'Marketing', 'Home Economics', 'Animal Husbandry', 'Technical Drawing']
         };
         
+        // Update subjects for single question form
         document.querySelector('select[name="exam_type"]')?.addEventListener('change', function() {
             const subjectSelect = document.getElementById('modalSubject');
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+            
+            const examSubjects = subjects[this.value] || [];
+            examSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectSelect.appendChild(option);
+            });
+        });
+        
+        // Update subjects for document upload form
+        document.getElementById('docExamType')?.addEventListener('change', function() {
+            const subjectSelect = document.getElementById('docSubject');
             subjectSelect.innerHTML = '<option value="">Select Subject</option>';
             
             const examSubjects = subjects[this.value] || [];
