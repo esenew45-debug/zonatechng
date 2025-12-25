@@ -131,7 +131,7 @@ class ZonaTech_User_Auth {
         $verification_code = $this->generate_verification_code();
         
         // Store pending registration
-        $pending_id = $wpdb->insert($table_name, array(
+        $insert_result = $wpdb->insert($table_name, array(
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
@@ -140,9 +140,17 @@ class ZonaTech_User_Auth {
             'verification_code' => $verification_code,
             'expires_at' => date('Y-m-d H:i:s', strtotime('+30 minutes')),
             'created_at' => current_time('mysql')
-        ));
+        ), array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'));
         
-        if (!$pending_id) {
+        if ($insert_result === false) {
+            // Log the database error for debugging
+            error_log('ZonaTech Registration DB Error: ' . $wpdb->last_error);
+            wp_send_json_error(array('message' => 'Failed to create registration. Please try again later.'));
+        }
+        
+        $pending_user_id = $wpdb->insert_id;
+        
+        if (!$pending_user_id) {
             wp_send_json_error(array('message' => 'Failed to create registration. Please try again.'));
         }
         
@@ -150,13 +158,13 @@ class ZonaTech_User_Auth {
         $email_sent = $this->send_verification_email($email, $first_name, $verification_code);
         
         if (!$email_sent) {
-            $wpdb->delete($table_name, array('id' => $wpdb->insert_id));
+            $wpdb->delete($table_name, array('id' => $pending_user_id));
             wp_send_json_error(array('message' => 'Failed to send verification email. Please try again.'));
         }
         
         wp_send_json_success(array(
             'message' => 'Verification code sent to your email!',
-            'pending_user_id' => $wpdb->insert_id
+            'pending_user_id' => $pending_user_id
         ));
     }
     
