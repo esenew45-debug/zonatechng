@@ -364,6 +364,24 @@ select.form-control option {
     color: var(--zona-white);
 }
 
+/* Textarea specific styling */
+textarea.form-control {
+    color: #ffffff !important;
+    min-height: 120px;
+    resize: vertical;
+}
+
+textarea.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Ensure all input text is visible */
+input.form-control,
+select.form-control,
+textarea.form-control {
+    color: #ffffff !important;
+}
+
 /* Grid System */
 .row {
     display: flex;

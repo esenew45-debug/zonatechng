@@ -174,6 +174,25 @@ class ZonaTech_Database {
             KEY user_id (user_id)
         ) $charset_collate;";
         dbDelta($sql_downloads);
+        
+        // Feedback Table
+        $table_feedback = $wpdb->prefix . 'zonatech_feedback';
+        $sql_feedback = "CREATE TABLE $table_feedback (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) DEFAULT 0,
+            name varchar(100) NOT NULL,
+            email varchar(100) NOT NULL,
+            subject varchar(255) DEFAULT '',
+            message text NOT NULL,
+            rating int(1) DEFAULT 0,
+            status varchar(20) DEFAULT 'unread',
+            admin_response text DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY status (status)
+        ) $charset_collate;";
+        dbDelta($sql_feedback);
     }
     
     public static function seed_sample_data() {

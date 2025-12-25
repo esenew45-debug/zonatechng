@@ -385,11 +385,14 @@ $recent_users = $wpdb->get_results($wpdb->prepare(
     10
 ));
 
-// Recent feedback
-$recent_feedback = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM $table_feedback ORDER BY created_at DESC LIMIT %d",
-    5
-));
+// Recent feedback (check if table exists first)
+$recent_feedback = array();
+if ($wpdb->get_var("SHOW TABLES LIKE '$table_feedback'") == $table_feedback) {
+    $recent_feedback = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_feedback ORDER BY created_at DESC LIMIT %d",
+        10
+    ));
+}
 
 // Activity log
 $recent_activities = $wpdb->get_results($wpdb->prepare(
