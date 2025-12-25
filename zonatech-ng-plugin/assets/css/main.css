@@ -1273,3 +1273,14 @@ body.page-template-default .entry-title {
         text-shadow: 0 0 30px rgba(139, 92, 246, 0.7), 0 0 40px rgba(139, 92, 246, 0.5);
     }
 }
+
+/* Feedback Section - Responsive */
+@media (max-width: 768px) {
+    .glass-card div[style*="grid-template-columns: 1fr 1fr"] {
+        display: block !important;
+    }
+    
+    .glass-card div[style*="grid-template-columns: 1fr 1fr"] > div:first-child {
+        margin-bottom: 2rem;
+    }
+}

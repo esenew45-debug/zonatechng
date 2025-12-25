@@ -38,6 +38,7 @@ if (!defined('ABSPATH')) exit;
                 <a href="#services"><i class="fas fa-concierge-bell"></i> Services</a>
                 <a href="#past-questions"><i class="fas fa-book-open"></i> Past Questions</a>
                 <a href="#scratch-cards"><i class="fas fa-credit-card"></i> Scratch Cards</a>
+                <a href="<?php echo site_url('/zonatech-feedback/'); ?>"><i class="fas fa-comment-dots"></i> Feedback</a>
                 <?php if (is_user_logged_in()): ?>
                     <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                     <a href="<?php echo wp_logout_url(site_url()); ?>" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -74,6 +75,7 @@ if (!defined('ABSPATH')) exit;
             <a href="<?php echo site_url('/zonatech-past-questions/'); ?>"><i class="fas fa-book-open"></i> Past Questions</a>
             <a href="<?php echo site_url('/zonatech-scratch-cards/'); ?>"><i class="fas fa-credit-card"></i> Scratch Cards</a>
             <a href="<?php echo site_url('/zonatech-nin-service/'); ?>"><i class="fas fa-id-card"></i> NIN Service</a>
+            <a href="<?php echo site_url('/zonatech-feedback/'); ?>"><i class="fas fa-comment-dots"></i> Feedback</a>
             <?php if (is_user_logged_in()): ?>
                 <a href="<?php echo site_url('/zonatech-dashboard/'); ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="<?php echo wp_logout_url(site_url()); ?>" class="mobile-logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -279,6 +281,58 @@ if (!defined('ABSPATH')) exit;
                 <a href="<?php echo site_url('/zonatech-register/'); ?>" class="btn btn-primary btn-lg glow">
                     <i class="fas fa-rocket"></i> Get Started Now
                 </a>
+            </div>
+        </section>
+        
+        <!-- Feedback Section -->
+        <section id="feedback" class="section">
+            <div class="section-header">
+                <h2 class="text-white"><i class="fas fa-comment-dots"></i> Share Your Feedback</h2>
+                <p class="text-muted">We value your opinion! Help us improve ZonaTech NG</p>
+            </div>
+            
+            <div class="glass-card" style="max-width: 800px; margin: 0 auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;">
+                    <div>
+                        <div style="width: 100px; height: 100px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.2); border-radius: 50%; font-size: 2.5rem; color: var(--zona-purple-light);">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <h3 class="text-white text-center">Your Voice Matters!</h3>
+                        <p class="text-muted text-center">
+                            Whether you have a suggestion, question, or just want to say hello, we'd love to hear from you.
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-white"><i class="fas fa-lightbulb"></i> How to Leave Feedback</h4>
+                        <ul style="list-style: none; padding: 0; margin: 1rem 0;">
+                            <li style="padding: 0.5rem 0; color: var(--zona-white-muted);">
+                                <i class="fas fa-check-circle" style="color: var(--zona-purple-light); margin-right: 0.5rem;"></i>
+                                Share your experience using our platform
+                            </li>
+                            <li style="padding: 0.5rem 0; color: var(--zona-white-muted);">
+                                <i class="fas fa-check-circle" style="color: var(--zona-purple-light); margin-right: 0.5rem;"></i>
+                                Suggest new features or improvements
+                            </li>
+                            <li style="padding: 0.5rem 0; color: var(--zona-white-muted);">
+                                <i class="fas fa-check-circle" style="color: var(--zona-purple-light); margin-right: 0.5rem;"></i>
+                                Report any issues you've encountered
+                            </li>
+                            <li style="padding: 0.5rem 0; color: var(--zona-white-muted);">
+                                <i class="fas fa-check-circle" style="color: var(--zona-purple-light); margin-right: 0.5rem;"></i>
+                                Rate your overall experience
+                            </li>
+                            <li style="padding: 0.5rem 0; color: var(--zona-white-muted);">
+                                <i class="fas fa-check-circle" style="color: var(--zona-purple-light); margin-right: 0.5rem;"></i>
+                                All feedback is read and appreciated!
+                            </li>
+                        </ul>
+                        
+                        <a href="<?php echo site_url('/zonatech-feedback/'); ?>" class="btn btn-primary btn-lg" style="width: 100%;">
+                            <i class="fas fa-paper-plane"></i> Leave Feedback
+                        </a>
+                    </div>
+                </div>
             </div>
         </section>
         
