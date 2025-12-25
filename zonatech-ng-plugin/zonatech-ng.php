@@ -278,7 +278,6 @@ class ZonaTech_NG {
             if (!get_page_by_path($slug)) {
                 $missing_pages[] = $slug;
             }
-            }
         }
         
         if (!empty($missing_pages)) {
