@@ -138,9 +138,17 @@ class ZonaTech_NG {
      */
     public function add_favicon() {
         ?>
+        <!-- Favicon and App Icons -->
         <link rel="icon" type="image/png" sizes="32x32" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/favicon.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/favicon.png">
         <link rel="icon" type="image/png" sizes="192x192" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
-        <link rel="shortcut icon" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/favicon.png">
+        <link rel="icon" type="image/png" sizes="512x512" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-512.png">
+        <link rel="shortcut icon" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/favicon.png" type="image/png">
+        <link rel="apple-touch-icon" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
+        <meta name="msapplication-TileImage" content="<?php echo ZONATECH_PLUGIN_URL; ?>assets/images/icon-192.png">
+        <meta name="msapplication-TileColor" content="#8b5cf6">
         <?php
     }
     

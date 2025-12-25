@@ -1217,3 +1217,57 @@ a.zonatech-logo:hover,
 a.footer-logo:hover {
     opacity: 0.9;
 }
+
+/* Hide WordPress Page Titles - Important for all pages */
+.page .entry-title,
+.page-title,
+.entry-title,
+.post-title,
+.wp-block-post-title,
+.entry-header,
+.page-header,
+.page-header-title,
+article.page > .entry-title,
+.hentry > .entry-title,
+.type-page > .entry-title,
+body.page .entry-title,
+body.single .entry-title,
+.page-template .entry-title,
+.page .post-title,
+body.page-template-default .entry-title {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+}
+
+/* Also hide theme-specific titles */
+[class*="page-title"],
+[class*="entry-title"]:not(.zonatech-container *),
+.singular .entry-title,
+.singular-page .entry-title,
+.single-post .entry-title {
+    display: none !important;
+}
+
+/* Dashboard Welcome Text - Visible with Animation */
+.dashboard-greeting h1 {
+    color: var(--zona-white) !important;
+    font-size: 1.5rem;
+    margin-bottom: 0.2rem;
+    animation: welcomeTextGlow 3s ease-in-out infinite;
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+@keyframes welcomeTextGlow {
+    0%, 100% { 
+        color: var(--zona-white);
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+    50% { 
+        color: var(--zona-purple-light);
+        text-shadow: 0 0 30px rgba(139, 92, 246, 0.7), 0 0 40px rgba(139, 92, 246, 0.5);
+    }
+}

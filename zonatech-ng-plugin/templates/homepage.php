@@ -424,15 +424,5 @@ jQuery(document).ready(function($) {
     mobileNav.find('a').on('click', function() {
         closeMobileNav();
     });
-    
-    // Download App button
-    $('#download-app-btn').on('click', function() {
-        if (window.ZonaTechPWA && window.ZonaTechPWA.deferredPrompt) {
-            window.ZonaTechPWA.installApp();
-        } else {
-            // Show manual install instructions
-            alert('To install the app:\n\n• On Chrome: Click the menu (⋮) and select "Install app"\n• On Safari: Tap Share and "Add to Home Screen"\n• On Firefox: Look for the install icon in the address bar');
-        }
-    });
 });
 </script>
