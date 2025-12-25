@@ -39,7 +39,7 @@ define('ZONATECH_PAYSTACK_SECRET_KEY', $zonatech_paystack_secret);
 
 // Support Contact Info
 define('ZONATECH_WHATSAPP_NUMBER', '08035328591');
-define('ZONATECH_SUPPORT_EMAIL', 'henryudonnah524@gmail.com');
+define('ZONATECH_SUPPORT_EMAIL', 'support@zonatechng.com');
 
 // Price Constants (in Naira)
 define('ZONATECH_SUBJECT_PRICE', 5000);

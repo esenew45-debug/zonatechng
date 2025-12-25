@@ -53,7 +53,7 @@ A comprehensive educational platform WordPress plugin for zonatechng.com featuri
 
 ### 💬 Support
 - WhatsApp button (08035328591)
-- Email support (henryudonnah524@gmail.com)
+- Email support (support@zonatechng.com)
 - Real-time digital clock on dashboard
 - Activity logging for user actions
 
@@ -159,7 +159,7 @@ The plugin creates the following custom tables:
 ## Support
 
 - **WhatsApp**: 08035328591
-- **Email**: henryudonnah524@gmail.com
+- **Email**: support@zonatechng.com
 
 ## License
 
