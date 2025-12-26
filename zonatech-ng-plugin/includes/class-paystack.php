@@ -98,12 +98,40 @@ class ZonaTech_Paystack {
         global $wpdb;
         $table_purchases = $wpdb->prefix . 'zonatech_purchases';
         
-        // Check if table exists
+        // Check if table exists, if not create it
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_purchases'");
         if (!$table_exists) {
-            error_log('ZonaTech: Purchases table does not exist: ' . $table_purchases);
-            wp_send_json_error(array('message' => 'Database not properly configured. Please contact support.'));
-            return;
+            error_log('ZonaTech: Purchases table does not exist, attempting to create: ' . $table_purchases);
+            
+            // Try to create the table
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_purchases (
+                id bigint(20) NOT NULL AUTO_INCREMENT,
+                user_id bigint(20) NOT NULL,
+                purchase_type varchar(50) NOT NULL,
+                item_name varchar(255) NOT NULL,
+                amount decimal(10,2) NOT NULL,
+                reference varchar(100) NOT NULL,
+                status varchar(20) DEFAULT 'pending',
+                meta_data longtext,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id),
+                KEY reference (reference),
+                KEY status (status)
+            ) $charset_collate;";
+            
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            
+            // Check again if table was created
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_purchases'");
+            if (!$table_exists) {
+                error_log('ZonaTech: Failed to create purchases table');
+                wp_send_json_error(array('message' => 'Database setup failed. Please try deactivating and reactivating the plugin, or contact support.'));
+                return;
+            }
+            error_log('ZonaTech: Successfully created purchases table');
         }
         
         $item_name = $this->get_item_name($payment_type, $meta_data);
@@ -370,13 +398,41 @@ class ZonaTech_Paystack {
             case 'subject':
                 // Grant access to subject
                 $table_access = $wpdb->prefix . 'zonatech_user_access';
-                $wpdb->insert($table_access, array(
+                
+                // Ensure table exists
+                $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_access'");
+                if (!$table_exists) {
+                    error_log('ZonaTech: User access table does not exist, creating it');
+                    $charset_collate = $wpdb->get_charset_collate();
+                    $sql = "CREATE TABLE $table_access (
+                        id bigint(20) NOT NULL AUTO_INCREMENT,
+                        user_id bigint(20) NOT NULL,
+                        exam_type varchar(20) NOT NULL,
+                        subject varchar(100) NOT NULL,
+                        purchase_id bigint(20),
+                        expires_at datetime,
+                        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        KEY user_id (user_id),
+                        KEY exam_subject (exam_type, subject)
+                    ) $charset_collate;";
+                    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+                    dbDelta($sql);
+                }
+                
+                $insert_result = $wpdb->insert($table_access, array(
                     'user_id' => $purchase->user_id,
                     'exam_type' => $meta_data['exam_type'] ?? '',
                     'subject' => $meta_data['subject'] ?? '',
                     'purchase_id' => $purchase->id,
                     'expires_at' => date('Y-m-d H:i:s', strtotime('+1 year'))
                 ));
+                
+                if ($insert_result === false) {
+                    error_log('ZonaTech: Failed to grant subject access - ' . $wpdb->last_error);
+                } else {
+                    error_log('ZonaTech: Successfully granted access to ' . ($meta_data['subject'] ?? 'unknown') . ' for user ' . $purchase->user_id);
+                }
                 break;
                 
             case 'scratch_card':
