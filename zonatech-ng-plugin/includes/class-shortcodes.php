@@ -90,11 +90,11 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_past_questions() {
-        // Require login to view past questions
-        $this->require_login('past-questions');
+        // Don't require login to browse - let the template handle access control
+        // This allows users to see what's available before logging in/paying
         
         $exam_types = ZonaTech_Past_Questions::get_exam_types();
-        $is_guest = false;
+        $is_guest = !is_user_logged_in();
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/past-questions.php';
@@ -125,7 +125,8 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_payment() {
-        $this->require_login('payment');
+        // Don't require login here - let the template handle it
+        // This allows the payment template to show a login prompt with the right redirect
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/payment.php';

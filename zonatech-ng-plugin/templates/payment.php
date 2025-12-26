@@ -9,7 +9,18 @@ if (!defined('ABSPATH')) exit;
 $payment_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
 $exam_type = isset($_GET['exam_type']) ? sanitize_text_field($_GET['exam_type']) : '';
 $subject = isset($_GET['subject']) ? sanitize_text_field($_GET['subject']) : '';
-$redirect_url = isset($_GET['redirect']) ? esc_url($_GET['redirect']) : site_url('/zonatech-past-questions/');
+
+// Validate redirect URL - only allow internal site URLs to prevent open redirect
+$redirect_url = site_url('/zonatech-past-questions/'); // Default
+if (isset($_GET['redirect']) && !empty($_GET['redirect'])) {
+    $requested_redirect = esc_url($_GET['redirect']);
+    // Only allow redirects to URLs on the same domain
+    $site_host = parse_url(site_url(), PHP_URL_HOST);
+    $redirect_host = parse_url($requested_redirect, PHP_URL_HOST);
+    if ($redirect_host === $site_host || empty($redirect_host)) {
+        $redirect_url = $requested_redirect;
+    }
+}
 
 // Check if user is logged in
 $is_logged_in = is_user_logged_in();
