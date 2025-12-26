@@ -1871,18 +1871,18 @@ $current_user = wp_get_current_user();
                 $is_configured = !empty($current_public_key) && !empty($current_secret_key);
                 ?>
                 
-                <div style="padding: 15px; background: <?php echo $is_configured ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'; ?>; border: 1px solid <?php echo $is_configured ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'; ?>; border-radius: 10px; margin-bottom: 20px;">
+                <div style="padding: 15px; background: <?php echo $is_configured ? ($is_test_mode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)') : 'rgba(245, 158, 11, 0.1)'; ?>; border: 1px solid <?php echo $is_configured ? ($is_test_mode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)') : 'rgba(245, 158, 11, 0.3)'; ?>; border-radius: 10px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <i class="fas <?php echo $is_configured ? 'fa-check-circle' : 'fa-exclamation-triangle'; ?>" style="color: <?php echo $is_configured ? '#10b981' : '#f59e0b'; ?>; font-size: 20px;"></i>
+                        <i class="fas <?php echo $is_configured ? ($is_test_mode ? 'fa-flask' : 'fa-check-circle') : 'fa-exclamation-triangle'; ?>" style="color: <?php echo $is_configured ? ($is_test_mode ? '#3b82f6' : '#10b981') : '#f59e0b'; ?>; font-size: 20px;"></i>
                         <div>
-                            <strong style="color: #fff;">Status: <?php echo $is_configured ? ($is_test_mode ? 'Test Mode' : 'Live Mode') : 'Not Configured'; ?></strong>
+                            <strong style="color: #fff;">Status: <?php echo $is_configured ? ($is_test_mode ? '🧪 Test Mode Active' : '✅ Live Mode Active') : '⚠️ Not Configured'; ?></strong>
                             <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0;">
                                 <?php if ($is_configured && $is_test_mode): ?>
-                                    Using test keys - no real charges will be made
+                                    Using test keys - test card: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;"><?php echo defined('ZONATECH_PAYSTACK_TEST_CARD') ? ZONATECH_PAYSTACK_TEST_CARD : '4084 0840 8408 4081'; ?></code>
                                 <?php elseif ($is_configured): ?>
-                                    Using live keys - real payments enabled
+                                    Using live keys - real payments will be processed
                                 <?php else: ?>
-                                    Configure your Paystack keys to enable payments
+                                    <strong style="color: #f59e0b;">Payments are disabled!</strong> Enter your Paystack API keys below to enable payments.
                                 <?php endif; ?>
                             </p>
                         </div>
@@ -1914,13 +1914,17 @@ $current_user = wp_get_current_user();
                 </form>
                 
                 <div style="margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 10px;">
-                    <h4 style="color: #3b82f6; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-info-circle"></i> How to get Paystack Keys</h4>
+                    <h4 style="color: #3b82f6; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-info-circle"></i> How to get your Paystack Test Keys</h4>
                     <ol style="font-size: 13px; color: rgba(255,255,255,0.7); padding-left: 20px; margin: 0;">
-                        <li>Go to <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" style="color: #8b5cf6;">Paystack Dashboard</a></li>
-                        <li>Navigate to Settings → API Keys & Webhooks</li>
-                        <li>Copy your Test keys to test payments</li>
-                        <li>Use Live keys when ready for real payments</li>
+                        <li><strong>Create a Paystack Account:</strong> <a href="https://paystack.com/signup" target="_blank" style="color: #8b5cf6;">Sign up at paystack.com</a> (Free)</li>
+                        <li><strong>Go to Settings:</strong> <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" style="color: #8b5cf6;">Settings → API Keys & Webhooks</a></li>
+                        <li><strong>Copy Test Keys:</strong> Copy your <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">pk_test_xxx</code> and <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">sk_test_xxx</code> keys</li>
+                        <li><strong>Paste above:</strong> Enter them in the form fields above and save</li>
+                        <li><strong>Test Payment:</strong> Use test card: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;"><?php echo defined('ZONATECH_PAYSTACK_TEST_CARD') ? ZONATECH_PAYSTACK_TEST_CARD : '4084 0840 8408 4081'; ?></code>, any future expiry, any CVV</li>
                     </ol>
+                    <p style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5);">
+                        <i class="fas fa-lightbulb"></i> Test keys allow you to test payments without real charges. Switch to Live keys when ready for production.
+                    </p>
                 </div>
             </div>
             

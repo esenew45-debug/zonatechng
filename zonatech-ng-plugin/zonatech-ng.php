@@ -22,7 +22,9 @@ define('ZONATECH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ZONATECH_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ZONATECH_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
-// Paystack Configuration - Keys are loaded from options, with validation
+// Paystack Configuration - Keys are loaded from WordPress options
+// To configure: Go to /zonatech-admin/ -> Settings -> Enter your Paystack keys
+// Get your keys from: https://dashboard.paystack.com/#/settings/developer
 $zonatech_paystack_public = get_option('zonatech_paystack_public_key', '');
 $zonatech_paystack_secret = get_option('zonatech_paystack_secret_key', '');
 
@@ -36,6 +38,15 @@ if (!empty($zonatech_paystack_secret) && strpos($zonatech_paystack_secret, 'sk_'
 
 define('ZONATECH_PAYSTACK_PUBLIC_KEY', $zonatech_paystack_public);
 define('ZONATECH_PAYSTACK_SECRET_KEY', $zonatech_paystack_secret);
+
+// Check if using test mode (test keys start with pk_test_ / sk_test_)
+define('ZONATECH_PAYSTACK_TEST_MODE', !empty($zonatech_paystack_public) && strpos($zonatech_paystack_public, 'pk_test_') === 0);
+
+// Flag to check if Paystack is properly configured
+define('ZONATECH_PAYSTACK_CONFIGURED', !empty($zonatech_paystack_public) && !empty($zonatech_paystack_secret));
+
+// Paystack test card for testing payments
+define('ZONATECH_PAYSTACK_TEST_CARD', '4084 0840 8408 4081');
 
 // Support Contact Info
 define('ZONATECH_WHATSAPP_NUMBER', '08035328591');
