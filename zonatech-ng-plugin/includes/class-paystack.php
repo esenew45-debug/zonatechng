@@ -40,6 +40,7 @@ class ZonaTech_Paystack {
         
         // Check if Paystack is configured
         if (empty($this->public_key) || empty($this->secret_key)) {
+            error_log('ZonaTech: Paystack not configured - public_key empty: ' . (empty($this->public_key) ? 'yes' : 'no') . ', secret_key empty: ' . (empty($this->secret_key) ? 'yes' : 'no'));
             wp_send_json_error(array('message' => 'Payment system is not configured. Please contact support at ' . ZONATECH_SUPPORT_EMAIL));
             return;
         }
@@ -47,9 +48,21 @@ class ZonaTech_Paystack {
         $user_id = get_current_user_id();
         $user = get_userdata($user_id);
         
+        if (!$user) {
+            error_log('ZonaTech: Could not get user data for user ID: ' . $user_id);
+            wp_send_json_error(array('message' => 'User data not found. Please try logging in again.'));
+            return;
+        }
+        
         $payment_type = sanitize_text_field($_POST['payment_type'] ?? '');
         $amount = floatval($_POST['amount'] ?? 0);
-        $meta_data = isset($_POST['meta_data']) ? json_decode(stripslashes($_POST['meta_data']), true) : array();
+        $meta_data_raw = isset($_POST['meta_data']) ? stripslashes($_POST['meta_data']) : '{}';
+        $meta_data = json_decode($meta_data_raw, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('ZonaTech: Invalid meta_data JSON: ' . $meta_data_raw . ' - Error: ' . json_last_error_msg());
+            $meta_data = array();
+        }
         
         if (empty($payment_type)) {
             wp_send_json_error(array('message' => 'Invalid payment type.'));
@@ -65,6 +78,7 @@ class ZonaTech_Paystack {
         );
         
         if (!isset($valid_amounts[$payment_type])) {
+            error_log('ZonaTech: Invalid payment type: ' . $payment_type);
             wp_send_json_error(array('message' => 'Invalid payment type: ' . $payment_type));
             return;
         }
@@ -73,6 +87,7 @@ class ZonaTech_Paystack {
         $amount = $valid_amounts[$payment_type];
         
         if ($amount <= 0) {
+            error_log('ZonaTech: Invalid amount for payment type ' . $payment_type . ': ' . $amount);
             wp_send_json_error(array('message' => 'Invalid payment amount for ' . $payment_type));
             return;
         }
@@ -83,9 +98,17 @@ class ZonaTech_Paystack {
         global $wpdb;
         $table_purchases = $wpdb->prefix . 'zonatech_purchases';
         
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_purchases'");
+        if (!$table_exists) {
+            error_log('ZonaTech: Purchases table does not exist: ' . $table_purchases);
+            wp_send_json_error(array('message' => 'Database not properly configured. Please contact support.'));
+            return;
+        }
+        
         $item_name = $this->get_item_name($payment_type, $meta_data);
         
-        $insert_result = $wpdb->insert($table_purchases, array(
+        $insert_data = array(
             'user_id' => $user_id,
             'purchase_type' => $payment_type,
             'item_name' => $item_name,
@@ -94,15 +117,21 @@ class ZonaTech_Paystack {
             'status' => 'pending',
             'meta_data' => wp_json_encode($meta_data),
             'created_at' => current_time('mysql')
-        ), array('%d', '%s', '%s', '%f', '%s', '%s', '%s', '%s'));
+        );
+        
+        error_log('ZonaTech: Attempting to insert purchase record: ' . wp_json_encode($insert_data));
+        
+        $insert_result = $wpdb->insert($table_purchases, $insert_data, array('%d', '%s', '%s', '%f', '%s', '%s', '%s', '%s'));
         
         if ($insert_result === false) {
             error_log('ZonaTech: Failed to create purchase record - ' . $wpdb->last_error);
+            error_log('ZonaTech: Last query was: ' . $wpdb->last_query);
             wp_send_json_error(array('message' => 'Failed to initialize payment. Please try again or contact support.'));
             return;
         }
         
         $purchase_id = $wpdb->insert_id;
+        error_log('ZonaTech: Purchase record created with ID: ' . $purchase_id);
         
         // Log the purchase initialization
         if (class_exists('ZonaTech_Activity_Log')) {

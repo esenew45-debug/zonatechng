@@ -228,20 +228,30 @@ switch ($payment_type) {
                                 } else {
                                     $btn.html(originalText).prop('disabled', false);
                                     paymentInitialized = false;
+                                    var errorMsg = response.data && response.data.message ? response.data.message : 'Failed to initialize payment.';
+                                    console.error('Payment initialization failed:', response);
                                     if (typeof ZonaTechNotify !== 'undefined') {
-                                        ZonaTechNotify.show(response.data.message || 'Failed to initialize payment.', 'error');
+                                        ZonaTechNotify.show(errorMsg, 'error');
                                     } else {
-                                        alert(response.data.message || 'Failed to initialize payment.');
+                                        alert(errorMsg);
                                     }
                                 }
                             },
-                            error: function() {
+                            error: function(xhr, status, error) {
                                 $btn.html(originalText).prop('disabled', false);
                                 paymentInitialized = false;
+                                console.error('Payment AJAX error:', status, error, xhr.responseText);
+                                var errorMsg = 'Network error. Please try again.';
+                                try {
+                                    var resp = JSON.parse(xhr.responseText);
+                                    if (resp.data && resp.data.message) {
+                                        errorMsg = resp.data.message;
+                                    }
+                                } catch(e) {}
                                 if (typeof ZonaTechNotify !== 'undefined') {
-                                    ZonaTechNotify.show('Network error. Please try again.', 'error');
+                                    ZonaTechNotify.show(errorMsg, 'error');
                                 } else {
-                                    alert('Network error. Please try again.');
+                                    alert(errorMsg);
                                 }
                             }
                         });
