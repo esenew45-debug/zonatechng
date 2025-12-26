@@ -289,9 +289,18 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success && response.data.subjects) {
                     var options = '<option value="">Select Subject</option>';
-                    $.each(response.data.subjects, function(index, subject) {
-                        options += '<option value="' + subject + '">' + subject + '</option>';
-                    });
+                    // Check if we have subjects_with_status for availability info
+                    if (response.data.subjects_with_status) {
+                        $.each(response.data.subjects_with_status, function(index, subjectInfo) {
+                            var availableText = subjectInfo.available ? ' ✓' : '';
+                            var dataAttr = subjectInfo.available ? 'data-available="true"' : 'data-available="false"';
+                            options += '<option value="' + subjectInfo.name + '" ' + dataAttr + '>' + subjectInfo.name + availableText + '</option>';
+                        });
+                    } else {
+                        $.each(response.data.subjects, function(index, subject) {
+                            options += '<option value="' + subject + '">' + subject + '</option>';
+                        });
+                    }
                     $subjectSelect.html(options);
                     
                     // Also fetch years for the exam type
@@ -486,10 +495,16 @@ function startQuiz(examType, subject, year) {
 // Purchase subject function (global scope)
 function purchaseSubject(examType, subject) {
     if (typeof zonatech_ajax !== 'undefined' && zonatech_ajax.paystack_configured) {
-        // Initialize Paystack payment
-        window.location.href = zonatech_ajax.ajax_url.replace('admin-ajax.php', '') + '../zonatech-payment/?type=subject&exam_type=' + examType + '&subject=' + encodeURIComponent(subject);
+        // Redirect to payment page with proper URL
+        var siteUrl = window.location.origin;
+        var paymentUrl = siteUrl + '/zonatech-payment/?type=subject&exam_type=' + encodeURIComponent(examType) + '&subject=' + encodeURIComponent(subject) + '&redirect=' + encodeURIComponent(window.location.href);
+        window.location.href = paymentUrl;
     } else {
-        alert('Payment system is not configured. Please contact support.');
+        if (typeof ZonaTechNotify !== 'undefined') {
+            ZonaTechNotify.show('Payment system is not configured. Please contact support.', 'error', 5000);
+        } else {
+            alert('Payment system is not configured. Please contact support at ' + (zonatech_ajax.support_email || 'support@zonatechng.com'));
+        }
     }
 }
 </script>

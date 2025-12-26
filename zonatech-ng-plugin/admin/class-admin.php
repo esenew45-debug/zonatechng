@@ -23,6 +23,9 @@ class ZonaTech_Admin {
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_notices', array($this, 'show_setup_notice'));
+        
+        // AJAX handler for saving Paystack keys from frontend admin dashboard
+        add_action('wp_ajax_zonatech_save_paystack_keys', array($this, 'save_paystack_keys'));
     }
     
     public function show_setup_notice() {
@@ -176,5 +179,49 @@ class ZonaTech_Admin {
     
     public function render_settings() {
         include ZONATECH_PLUGIN_DIR . 'admin/views/settings.php';
+    }
+    
+    /**
+     * AJAX handler to save Paystack keys from frontend admin dashboard
+     */
+    public function save_paystack_keys() {
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'zonatech_save_paystack')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+        }
+        
+        // Check if user can manage options
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'You do not have permission to change settings.'));
+        }
+        
+        $public_key = sanitize_text_field($_POST['public_key'] ?? '');
+        $secret_key = sanitize_text_field($_POST['secret_key'] ?? '');
+        
+        // Validate public key format if not empty
+        if (!empty($public_key) && !preg_match('/^pk_(test|live)_/', $public_key)) {
+            wp_send_json_error(array('message' => 'Invalid public key format. It should start with pk_test_ or pk_live_'));
+        }
+        
+        // Validate secret key format if not empty
+        if (!empty($secret_key) && !preg_match('/^sk_(test|live)_/', $secret_key)) {
+            wp_send_json_error(array('message' => 'Invalid secret key format. It should start with sk_test_ or sk_live_'));
+        }
+        
+        // Save the keys
+        update_option('zonatech_paystack_public_key', $public_key);
+        update_option('zonatech_paystack_secret_key', $secret_key);
+        
+        // Log the action
+        if (class_exists('ZonaTech_Activity_Log')) {
+            ZonaTech_Activity_Log::log(
+                get_current_user_id(),
+                'settings_update',
+                'Paystack API keys updated',
+                array('test_mode' => strpos($public_key, 'pk_test_') === 0)
+            );
+        }
+        
+        wp_send_json_success(array('message' => 'Paystack keys saved successfully!'));
     }
 }

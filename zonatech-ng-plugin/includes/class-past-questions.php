@@ -40,18 +40,33 @@ class ZonaTech_Past_Questions {
         global $wpdb;
         $table_questions = $wpdb->prefix . 'zonatech_questions';
         
-        // First try to get subjects from database
-        $subjects = $wpdb->get_col($wpdb->prepare(
+        // Get subjects from database that have questions
+        $db_subjects = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT subject FROM $table_questions WHERE exam_type = %s ORDER BY subject",
             $exam_type
         ));
         
-        // If no subjects in database, use predefined list
-        if (empty($subjects)) {
-            $subjects = self::get_predefined_subjects($exam_type);
+        // Get predefined subjects list
+        $predefined_subjects = self::get_predefined_subjects($exam_type);
+        
+        // Merge and deduplicate: add database subjects that might not be in predefined list
+        $all_subjects = array_unique(array_merge($predefined_subjects, $db_subjects));
+        sort($all_subjects);
+        
+        // Create subjects with availability status
+        $subjects_with_status = array();
+        foreach ($all_subjects as $subject) {
+            $has_questions = in_array($subject, $db_subjects);
+            $subjects_with_status[] = array(
+                'name' => $subject,
+                'available' => $has_questions
+            );
         }
         
-        wp_send_json_success(array('subjects' => $subjects));
+        wp_send_json_success(array(
+            'subjects' => $all_subjects,  // For backwards compatibility
+            'subjects_with_status' => $subjects_with_status
+        ));
     }
     
     public static function get_predefined_subjects($exam_type) {

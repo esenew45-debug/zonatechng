@@ -153,6 +153,17 @@ $stats = $user_data['stats'];
                     </div>
                 </div>
                 
+                <!-- My Purchased Subjects -->
+                <div class="dashboard-section">
+                    <div class="section-title">
+                        <h3><i class="fas fa-book-reader"></i> My Subjects</h3>
+                        <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="btn btn-ghost btn-sm">Browse More</a>
+                    </div>
+                    <div id="my-subjects-list">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+                
                 <!-- Recent Activity -->
                 <div class="dashboard-section">
                     <div class="section-title">
@@ -331,6 +342,56 @@ jQuery(document).ready(function($) {
     
     // Load recent activity on page load
     loadRecentActivity();
+    
+    // Load my subjects on page load
+    loadMySubjects();
+    
+    function loadMySubjects() {
+        $.ajax({
+            url: zonatech_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'zonatech_get_user_subjects',
+                nonce: zonatech_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data.subjects && response.data.subjects.length > 0) {
+                    var html = '<div class="subjects-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">';
+                    response.data.subjects.forEach(function(subject) {
+                        html += `
+                            <div class="glass-effect" style="padding: 1rem; border-radius: 12px; cursor: pointer;" 
+                                 onclick="window.location.href='<?php echo site_url('/zonatech-past-questions/'); ?>?exam=${subject.exam_type}&subject=${encodeURIComponent(subject.subject)}'">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.2)); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-book" style="color: var(--zona-purple);"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.9rem; color: #fff;">${subject.subject}</h4>
+                                        <p style="margin: 0; font-size: 0.75rem; color: rgba(255,255,255,0.6);">${subject.exam_type.toUpperCase()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    $('#my-subjects-list').html(html);
+                } else {
+                    $('#my-subjects-list').html(`
+                        <div class="empty-state" style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-book-open" style="font-size: 2rem; color: var(--zona-purple); margin-bottom: 0.5rem;"></i>
+                            <p class="text-muted">You haven't purchased any subjects yet.</p>
+                            <a href="<?php echo site_url('/zonatech-past-questions/'); ?>" class="btn btn-primary btn-sm mt-1">
+                                <i class="fas fa-shopping-cart"></i> Browse Subjects
+                            </a>
+                        </div>
+                    `);
+                }
+            },
+            error: function() {
+                $('#my-subjects-list').html('<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Failed to load subjects.</p></div>');
+            }
+        });
+    }
     
     function loadRecentActivity() {
         $.ajax({

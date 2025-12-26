@@ -23,6 +23,7 @@ class ZonaTech_Ajax_Handlers {
         add_action('wp_ajax_zonatech_get_dashboard_data', array($this, 'get_dashboard_data'));
         add_action('wp_ajax_zonatech_get_payment_history', array($this, 'get_payment_history'));
         add_action('wp_ajax_zonatech_get_downloaded_documents', array($this, 'get_downloaded_documents'));
+        add_action('wp_ajax_zonatech_get_user_subjects', array($this, 'get_user_subjects'));
     }
     
     public function get_dashboard_data() {
@@ -112,6 +113,19 @@ class ZonaTech_Ajax_Handlers {
         }
         
         wp_send_json_success(array('documents' => $documents));
+    }
+    
+    public function get_user_subjects() {
+        check_ajax_referer('zonatech_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Please login.'));
+        }
+        
+        $user_id = get_current_user_id();
+        $subjects = ZonaTech_Past_Questions::get_user_accessible_subjects($user_id);
+        
+        wp_send_json_success(array('subjects' => $subjects));
     }
     
     private function get_document_icon($type) {
