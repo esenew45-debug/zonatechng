@@ -57,6 +57,7 @@ define('ZONATECH_SUBJECT_PRICE', 5000);
 define('ZONATECH_NIN_SLIP_PRICE', 2000);          // Premium NIN Slip
 define('ZONATECH_NIN_STANDARD_SLIP_PRICE', 1000); // Standard NIN Slip
 define('ZONATECH_SCRATCH_CARD_PRICE', 5000);
+define('ZONATECH_OTAPAY_CARD_PRICE', 4000);       // OtaPay WAEC/NECO Cards price
 
 // Session timeout (3 days in seconds)
 define('ZONATECH_SESSION_TIMEOUT', 3 * DAY_IN_SECONDS);
@@ -92,6 +93,7 @@ class ZonaTech_NG {
         require_once ZONATECH_PLUGIN_DIR . 'includes/class-ajax-handlers.php';
         require_once ZONATECH_PLUGIN_DIR . 'includes/class-shortcodes.php';
         require_once ZONATECH_PLUGIN_DIR . 'includes/class-feedback.php';
+        require_once ZONATECH_PLUGIN_DIR . 'includes/class-otapay.php';
         require_once ZONATECH_PLUGIN_DIR . 'admin/class-admin.php';
     }
     
@@ -178,6 +180,7 @@ class ZonaTech_NG {
         ZonaTech_Ajax_Handlers::get_instance();
         ZonaTech_Shortcodes::get_instance();
         ZonaTech_Feedback::get_instance();
+        ZonaTech_OtaPay::get_instance();
         
         if (is_admin()) {
             ZonaTech_Admin::get_instance();

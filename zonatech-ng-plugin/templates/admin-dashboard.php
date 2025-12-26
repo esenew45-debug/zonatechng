@@ -2066,6 +2066,75 @@ $current_user = wp_get_current_user();
                 </div>
             </div>
             
+            <!-- OtaPay Configuration (for WAEC/NECO Cards) -->
+            <div class="admin-section" style="margin-bottom: 20px; margin-top: 25px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #ffffff;"><i class="fas fa-shopping-bag" style="color: #f59e0b;"></i> OtaPay Configuration (WAEC/NECO Cards)</h3>
+                
+                <?php 
+                $otapay_api_key = get_option('zonatech_otapay_api_key', '');
+                $otapay_configured = !empty($otapay_api_key);
+                ?>
+                
+                <!-- Current Status -->
+                <div style="padding: 15px; background: <?php echo $otapay_configured ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'; ?>; border: 1px solid <?php echo $otapay_configured ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'; ?>; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas <?php echo $otapay_configured ? 'fa-check-circle' : 'fa-exclamation-triangle'; ?>" style="color: <?php echo $otapay_configured ? '#10b981' : '#f59e0b'; ?>; font-size: 20px;"></i>
+                        <div>
+                            <strong style="color: #fff;">Status: <?php echo $otapay_configured ? '✅ OtaPay Connected' : '⚠️ Not Configured'; ?></strong>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0;">
+                                <?php if ($otapay_configured): ?>
+                                    Users can purchase WAEC and NECO scratch cards at ₦<?php echo number_format(ZONATECH_OTAPAY_CARD_PRICE); ?> each
+                                <?php else: ?>
+                                    Configure OtaPay to enable automatic WAEC/NECO scratch card purchases
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API Key Form -->
+                <div style="padding: 20px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 10px;">
+                    <form id="otapay-key-form" method="post">
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label style="color: rgba(255,255,255,0.8);"><i class="fas fa-key"></i> OtaPay API Key</label>
+                            <input type="password" name="otapay_api_key" id="otapay_api_key" 
+                                   value="<?php echo esc_attr($otapay_api_key); ?>" 
+                                   placeholder="Enter your OtaPay API key"
+                                   style="font-family: monospace; width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; color: #fff;">
+                            <small style="color: rgba(255,255,255,0.5); display: block; margin-top: 5px;">
+                                Get your API key from <a href="https://otapay.ng/dashboard" target="_blank" style="color: #f59e0b;">otapay.ng/dashboard</a>
+                            </small>
+                        </div>
+                        
+                        <button type="submit" class="admin-form-submit" style="background: linear-gradient(135deg, #f59e0b, #d97706); width: 100%;">
+                            <i class="fas fa-save"></i> Save OtaPay API Key
+                        </button>
+                    </form>
+                    
+                    <?php if ($otapay_configured): ?>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0;">
+                            <i class="fas fa-info-circle"></i> <strong>Current Price:</strong> ₦<?php echo number_format(ZONATECH_OTAPAY_CARD_PRICE); ?> per card (WAEC/NECO)
+                        </p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- How OtaPay works -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 10px;">
+                    <h4 style="color: #a78bfa; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-info-circle"></i> How OtaPay Integration Works</h4>
+                    <ol style="font-size: 13px; color: rgba(255,255,255,0.7); padding-left: 20px; margin: 0;">
+                        <li><strong>Create OtaPay Account:</strong> <a href="https://otapay.ng/register" target="_blank" style="color: #f59e0b;">Sign up at otapay.ng</a></li>
+                        <li><strong>Fund your wallet:</strong> Add funds to your OtaPay wallet</li>
+                        <li><strong>Get API Key:</strong> Go to Dashboard → API Settings → Copy API Key</li>
+                        <li><strong>Paste above:</strong> Enter your API key and save</li>
+                    </ol>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px;">
+                        When users purchase WAEC/NECO cards, the system automatically fetches PINs from OtaPay and delivers instantly.
+                    </p>
+                </div>
+            </div>
+            
             <div style="margin-top: 25px;">
                 <h3 style="font-size: 16px; margin-bottom: 15px;"><i class="fas fa-sliders-h"></i> Pricing Info</h3>
                 <div class="three-columns">
@@ -2074,8 +2143,8 @@ $current_user = wp_get_current_user();
                         <div class="value">₦<?php echo number_format(ZONATECH_SUBJECT_PRICE); ?></div>
                     </div>
                     <div class="card-info">
-                        <h4>Scratch Card</h4>
-                        <div class="value">₦<?php echo number_format(ZONATECH_SCRATCH_CARD_PRICE); ?></div>
+                        <h4>WAEC/NECO Card</h4>
+                        <div class="value">₦<?php echo number_format(ZONATECH_OTAPAY_CARD_PRICE); ?></div>
                     </div>
                     <div class="card-info">
                         <h4>NIN Slip</h4>
@@ -2181,6 +2250,49 @@ $current_user = wp_get_current_user();
                     window.location.reload();
                 } else {
                     alert(data.data.message || 'Failed to save keys.');
+                }
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        // Handle OtaPay API Key form submission
+        document.getElementById('otapay-key-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var apiKey = document.getElementById('otapay_api_key').value.trim();
+            
+            if (!apiKey) {
+                if (!confirm('No API key entered. This will disable OtaPay integration. Continue?')) {
+                    return;
+                }
+            }
+            
+            saveOtaPayKey(apiKey);
+        });
+        
+        function saveOtaPayKey(apiKey) {
+            var formData = new FormData();
+            formData.append('action', 'zonatech_save_otapay_key');
+            formData.append('nonce', '<?php echo wp_create_nonce('zonatech_save_otapay'); ?>');
+            formData.append('api_key', apiKey);
+            
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    var message = data.data.message;
+                    if (data.data.balance) {
+                        message += '\nWallet Balance: ₦' + data.data.balance;
+                    }
+                    alert(message);
+                    window.location.reload();
+                } else {
+                    alert(data.data?.message || 'Failed to save OtaPay API key.');
                 }
             })
             .catch(error => {

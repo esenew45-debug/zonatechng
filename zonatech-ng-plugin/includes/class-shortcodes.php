@@ -113,11 +113,8 @@ class ZonaTech_Shortcodes {
     }
     
     public function render_scratch_cards() {
-        // Require login to purchase scratch cards
-        $this->require_login('scratch-cards');
-        
-        $card_types = ZonaTech_Scratch_Cards::get_card_types();
-        $is_guest = false;
+        // Allow viewing scratch cards page without login - purchase requires login
+        // Similar to past questions - show what's available
         
         ob_start();
         include ZONATECH_PLUGIN_DIR . 'templates/scratch-cards.php';
