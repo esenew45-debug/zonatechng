@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#0a0a0f"/>
+    </linearGradient>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
+  
+  <!-- Graduation Cap Icon -->
+  <g transform="translate(256, 256)">
+    <!-- Cap base -->
+    <polygon points="-120,20 0,-40 120,20 0,80" fill="url(#purpleGradient)"/>
+    <!-- Cap top -->
+    <polygon points="-100,0 0,-50 100,0 0,50" fill="#a78bfa"/>
+    <!-- Tassel -->
+    <line x1="0" y1="-50" x2="80" y2="-30" stroke="#fff" stroke-width="4"/>
+    <circle cx="85" cy="-25" r="10" fill="#fff"/>
+    <line x1="85" y1="-15" x2="85" y2="40" stroke="#fff" stroke-width="4"/>
+    <ellipse cx="85" cy="50" rx="15" ry="8" fill="#fff"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="256" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff">ZonaTech</text>
+  <text x="256" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" fill="#a78bfa">NG</text>
+</svg>

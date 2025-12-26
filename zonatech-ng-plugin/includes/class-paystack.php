@@ -1,0 +1,623 @@
+<?php
+/**
+ * Paystack Integration Class
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class ZonaTech_Paystack {
+    
+    private static $instance = null;
+    private $secret_key;
+    private $public_key;
+    
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    private function __construct() {
+        $this->secret_key = get_option('zonatech_paystack_secret_key', '');
+        $this->public_key = get_option('zonatech_paystack_public_key', '');
+        
+        add_action('wp_ajax_zonatech_initialize_payment', array($this, 'initialize_payment'));
+        add_action('wp_ajax_zonatech_verify_payment', array($this, 'verify_payment'));
+        add_action('wp_ajax_nopriv_zonatech_paystack_webhook', array($this, 'handle_webhook'));
+        add_action('wp_ajax_zonatech_paystack_webhook', array($this, 'handle_webhook'));
+    }
+    
+    public function initialize_payment() {
+        check_ajax_referer('zonatech_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Please login to make payment.'));
+            return;
+        }
+        
+        // Check if Paystack is configured
+        if (empty($this->public_key) || empty($this->secret_key)) {
+            error_log('ZonaTech: Paystack not configured - public_key empty: ' . (empty($this->public_key) ? 'yes' : 'no') . ', secret_key empty: ' . (empty($this->secret_key) ? 'yes' : 'no'));
+            wp_send_json_error(array('message' => 'Payment system is not configured. Please contact support at ' . ZONATECH_SUPPORT_EMAIL));
+            return;
+        }
+        
+        $user_id = get_current_user_id();
+        $user = get_userdata($user_id);
+        
+        if (!$user) {
+            error_log('ZonaTech: Could not get user data for user ID: ' . $user_id);
+            wp_send_json_error(array('message' => 'User data not found. Please try logging in again.'));
+            return;
+        }
+        
+        $payment_type = sanitize_text_field($_POST['payment_type'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+        $meta_data_raw = isset($_POST['meta_data']) ? stripslashes($_POST['meta_data']) : '{}';
+        $meta_data = json_decode($meta_data_raw, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('ZonaTech: Invalid meta_data JSON: ' . $meta_data_raw . ' - Error: ' . json_last_error_msg());
+            $meta_data = array();
+        }
+        
+        if (empty($payment_type)) {
+            wp_send_json_error(array('message' => 'Invalid payment type.'));
+            return;
+        }
+        
+        // Validate amount based on payment type
+        $valid_amounts = array(
+            'subject' => ZONATECH_SUBJECT_PRICE,
+            'nin_slip' => ZONATECH_NIN_SLIP_PRICE,
+            'nin_standard_slip' => ZONATECH_NIN_STANDARD_SLIP_PRICE,
+            'scratch_card' => ZONATECH_SCRATCH_CARD_PRICE
+        );
+        
+        if (!isset($valid_amounts[$payment_type])) {
+            error_log('ZonaTech: Invalid payment type: ' . $payment_type);
+            wp_send_json_error(array('message' => 'Invalid payment type: ' . $payment_type));
+            return;
+        }
+        
+        // Use the server-side amount to prevent tampering (ignore client-side amount)
+        $amount = $valid_amounts[$payment_type];
+        
+        if ($amount <= 0) {
+            error_log('ZonaTech: Invalid amount for payment type ' . $payment_type . ': ' . $amount);
+            wp_send_json_error(array('message' => 'Invalid payment amount for ' . $payment_type));
+            return;
+        }
+        
+        $reference = 'ZONA_' . time() . '_' . wp_rand(1000, 9999);
+        
+        // Create pending purchase record
+        global $wpdb;
+        $table_purchases = $wpdb->prefix . 'zonatech_purchases';
+        
+        // Check if table exists, if not create it
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_purchases'");
+        if (!$table_exists) {
+            error_log('ZonaTech: Purchases table does not exist, attempting to create: ' . $table_purchases);
+            
+            // Try to create the table
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_purchases (
+                id bigint(20) NOT NULL AUTO_INCREMENT,
+                user_id bigint(20) NOT NULL,
+                purchase_type varchar(50) NOT NULL,
+                item_name varchar(255) NOT NULL,
+                amount decimal(10,2) NOT NULL,
+                reference varchar(100) NOT NULL,
+                status varchar(20) DEFAULT 'pending',
+                meta_data longtext,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id),
+                KEY reference (reference),
+                KEY status (status)
+            ) $charset_collate;";
+            
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            
+            // Check again if table was created
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_purchases'");
+            if (!$table_exists) {
+                error_log('ZonaTech: Failed to create purchases table');
+                wp_send_json_error(array('message' => 'Database setup failed. Please try deactivating and reactivating the plugin, or contact support.'));
+                return;
+            }
+            error_log('ZonaTech: Successfully created purchases table');
+        }
+        
+        $item_name = $this->get_item_name($payment_type, $meta_data);
+        
+        $insert_data = array(
+            'user_id' => $user_id,
+            'purchase_type' => $payment_type,
+            'item_name' => $item_name,
+            'amount' => $amount,
+            'reference' => $reference,
+            'status' => 'pending',
+            'meta_data' => wp_json_encode($meta_data),
+            'created_at' => current_time('mysql')
+        );
+        
+        error_log('ZonaTech: Attempting to insert purchase record: ' . wp_json_encode($insert_data));
+        
+        $insert_result = $wpdb->insert($table_purchases, $insert_data, array('%d', '%s', '%s', '%f', '%s', '%s', '%s', '%s'));
+        
+        if ($insert_result === false) {
+            error_log('ZonaTech: Failed to create purchase record - ' . $wpdb->last_error);
+            error_log('ZonaTech: Last query was: ' . $wpdb->last_query);
+            wp_send_json_error(array('message' => 'Failed to initialize payment. Please try again or contact support.'));
+            return;
+        }
+        
+        $purchase_id = $wpdb->insert_id;
+        error_log('ZonaTech: Purchase record created with ID: ' . $purchase_id);
+        
+        // Log the purchase initialization
+        if (class_exists('ZonaTech_Activity_Log')) {
+            ZonaTech_Activity_Log::log(
+                $user_id,
+                'payment_initialized',
+                sprintf('Payment initialized for %s (Ref: %s)', $item_name, $reference),
+                array('reference' => $reference, 'amount' => $amount, 'purchase_id' => $purchase_id)
+            );
+        }
+        
+        // Build metadata including all necessary info for recovery
+        $paystack_metadata = array(
+            'user_id' => $user_id,
+            'payment_type' => $payment_type,
+            'item_name' => $item_name,
+            'purchase_id' => $purchase_id
+        );
+        
+        // Include meta_data fields in paystack metadata for recovery
+        if (!empty($meta_data)) {
+            foreach ($meta_data as $key => $value) {
+                $paystack_metadata[$key] = $value;
+            }
+        }
+        
+        $paystack_metadata['custom_fields'] = array(
+            array(
+                'display_name' => 'Customer Name',
+                'variable_name' => 'customer_name',
+                'value' => $user->display_name
+            ),
+            array(
+                'display_name' => 'Payment Type',
+                'variable_name' => 'payment_type',
+                'value' => $payment_type
+            ),
+            array(
+                'display_name' => 'Reference',
+                'variable_name' => 'reference',
+                'value' => $reference
+            )
+        );
+        
+        // Return data for Paystack inline
+        wp_send_json_success(array(
+            'reference' => $reference,
+            'email' => $user->user_email,
+            'amount' => $amount * 100, // Convert to kobo
+            'public_key' => $this->public_key,
+            'currency' => 'NGN',
+            'metadata' => $paystack_metadata
+        ));
+    }
+    
+    public function verify_payment() {
+        check_ajax_referer('zonatech_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('message' => 'Please login to verify payment.'));
+        }
+        
+        $reference = sanitize_text_field($_POST['reference'] ?? '');
+        $user_id = get_current_user_id();
+        
+        if (empty($reference)) {
+            wp_send_json_error(array('message' => 'Invalid payment reference.'));
+        }
+        
+        // Log verification attempt
+        error_log('ZonaTech: Verifying payment reference: ' . $reference . ' for user: ' . $user_id);
+        
+        // Verify with Paystack API
+        $response = wp_remote_get(
+            'https://api.paystack.co/transaction/verify/' . $reference,
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $this->secret_key
+                ),
+                'timeout' => 30
+            )
+        );
+        
+        if (is_wp_error($response)) {
+            error_log('ZonaTech: Paystack API error - ' . $response->get_error_message());
+            wp_send_json_error(array('message' => 'Could not verify payment. Please contact support.'));
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['status']) || !$body['status']) {
+            error_log('ZonaTech: Paystack verification failed - ' . wp_json_encode($body));
+            wp_send_json_error(array('message' => 'Payment verification failed. Please contact support if payment was deducted.'));
+        }
+        
+        if (!isset($body['data']['status']) || $body['data']['status'] !== 'success') {
+            error_log('ZonaTech: Payment not successful - status: ' . ($body['data']['status'] ?? 'unknown'));
+            wp_send_json_error(array('message' => 'Payment was not successful. Status: ' . ($body['data']['status'] ?? 'unknown')));
+        }
+        
+        // Update purchase record
+        global $wpdb;
+        $table_purchases = $wpdb->prefix . 'zonatech_purchases';
+        
+        // First, look for the purchase record
+        $purchase = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_purchases WHERE reference = %s",
+            $reference
+        ));
+        
+        if (!$purchase) {
+            // If not found, it might be a timing issue - try to create it from Paystack metadata
+            error_log('ZonaTech: Purchase record not found for reference: ' . $reference . '. Attempting to create from Paystack data.');
+            
+            // Get metadata from Paystack response
+            $metadata = isset($body['data']['metadata']) ? $body['data']['metadata'] : array();
+            $payment_type = isset($metadata['payment_type']) ? $metadata['payment_type'] : '';
+            $item_name = isset($metadata['item_name']) ? $metadata['item_name'] : 'Unknown Purchase';
+            $amount = isset($body['data']['amount']) ? ($body['data']['amount'] / 100) : 0; // Convert from kobo
+            $paystack_user_id = isset($metadata['user_id']) ? intval($metadata['user_id']) : $user_id;
+            
+            // Validate that the user matches
+            if ($paystack_user_id !== $user_id) {
+                error_log('ZonaTech: User mismatch - Paystack user: ' . $paystack_user_id . ', Current user: ' . $user_id);
+                wp_send_json_error(array('message' => 'Payment verification failed - user mismatch. Please contact support.'));
+            }
+            
+            if (!empty($payment_type) && $amount > 0) {
+                // Create the purchase record
+                $meta_data = array();
+                if (isset($metadata['exam_type'])) $meta_data['exam_type'] = $metadata['exam_type'];
+                if (isset($metadata['subject'])) $meta_data['subject'] = $metadata['subject'];
+                if (isset($metadata['card_type'])) $meta_data['card_type'] = $metadata['card_type'];
+                
+                $wpdb->insert($table_purchases, array(
+                    'user_id' => $user_id,
+                    'purchase_type' => $payment_type,
+                    'item_name' => $item_name,
+                    'amount' => $amount,
+                    'reference' => $reference,
+                    'status' => 'completed',
+                    'meta_data' => wp_json_encode($meta_data),
+                    'created_at' => current_time('mysql')
+                ), array('%d', '%s', '%s', '%f', '%s', '%s', '%s', '%s'));
+                
+                if ($wpdb->insert_id) {
+                    // Fetch the newly created purchase
+                    $purchase = $wpdb->get_row($wpdb->prepare(
+                        "SELECT * FROM $table_purchases WHERE id = %d",
+                        $wpdb->insert_id
+                    ));
+                    
+                    // Process the purchase
+                    if ($purchase) {
+                        $this->process_purchase($purchase);
+                    }
+                    
+                    // Log activity
+                    if (class_exists('ZonaTech_Activity_Log')) {
+                        ZonaTech_Activity_Log::log(
+                            $user_id,
+                            'payment_completed',
+                            sprintf('Payment of ₦%s completed for %s (recovered)', number_format($amount), $item_name),
+                            array('reference' => $reference, 'amount' => $amount)
+                        );
+                    }
+                    
+                    wp_send_json_success(array(
+                        'message' => 'Payment successful!',
+                        'purchase' => array(
+                            'type' => $payment_type,
+                            'item' => $item_name,
+                            'amount' => $amount
+                        )
+                    ));
+                }
+            }
+            
+            // If we still can't create the record, fail gracefully
+            error_log('ZonaTech: Could not recover purchase record for reference: ' . $reference);
+            // Don't expose reference to client for security - it's already logged server-side
+            wp_send_json_error(array(
+                'message' => 'Payment verified but there was an issue processing your order. Your payment has been received. Please contact support.',
+                'support_ref' => substr($reference, -8) // Only show last 8 characters for support reference
+            ));
+        }
+        
+        if ($purchase->status === 'completed') {
+            wp_send_json_success(array(
+                'message' => 'Payment already processed.',
+                'purchase' => array(
+                    'type' => $purchase->purchase_type,
+                    'item' => $purchase->item_name,
+                    'amount' => $purchase->amount
+                )
+            ));
+        }
+        
+        // Mark as completed
+        $update_result = $wpdb->update(
+            $table_purchases,
+            array('status' => 'completed'),
+            array('reference' => $reference)
+        );
+        
+        if ($update_result === false) {
+            error_log('ZonaTech: Failed to update purchase status - ' . $wpdb->last_error);
+        }
+        
+        // Process the purchase based on type
+        $this->process_purchase($purchase);
+        
+        // Log activity
+        ZonaTech_Activity_Log::log(
+            $user_id,
+            'payment_completed',
+            sprintf('Payment of ₦%s completed for %s', number_format($purchase->amount), $purchase->item_name),
+            array('reference' => $reference, 'amount' => $purchase->amount)
+        );
+        
+        wp_send_json_success(array(
+            'message' => 'Payment successful!',
+            'purchase' => array(
+                'type' => $purchase->purchase_type,
+                'item' => $purchase->item_name,
+                'amount' => $purchase->amount
+            )
+        ));
+    }
+    
+    private function process_purchase($purchase) {
+        global $wpdb;
+        $meta_data = json_decode($purchase->meta_data, true);
+        
+        switch ($purchase->purchase_type) {
+            case 'subject':
+                // Grant access to subject
+                $table_access = $wpdb->prefix . 'zonatech_user_access';
+                
+                // Ensure table exists
+                $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_access'");
+                if (!$table_exists) {
+                    error_log('ZonaTech: User access table does not exist, creating it');
+                    $charset_collate = $wpdb->get_charset_collate();
+                    $sql = "CREATE TABLE $table_access (
+                        id bigint(20) NOT NULL AUTO_INCREMENT,
+                        user_id bigint(20) NOT NULL,
+                        exam_type varchar(20) NOT NULL,
+                        subject varchar(100) NOT NULL,
+                        purchase_id bigint(20),
+                        expires_at datetime,
+                        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        KEY user_id (user_id),
+                        KEY exam_subject (exam_type, subject)
+                    ) $charset_collate;";
+                    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+                    dbDelta($sql);
+                }
+                
+                $insert_result = $wpdb->insert($table_access, array(
+                    'user_id' => $purchase->user_id,
+                    'exam_type' => $meta_data['exam_type'] ?? '',
+                    'subject' => $meta_data['subject'] ?? '',
+                    'purchase_id' => $purchase->id,
+                    'expires_at' => date('Y-m-d H:i:s', strtotime('+1 year'))
+                ));
+                
+                if ($insert_result === false) {
+                    error_log('ZonaTech: Failed to grant subject access - ' . $wpdb->last_error);
+                } else {
+                    error_log('ZonaTech: Successfully granted access to ' . ($meta_data['subject'] ?? 'unknown') . ' for user ' . $purchase->user_id);
+                }
+                break;
+                
+            case 'scratch_card':
+                // Assign a scratch card
+                $table_cards = $wpdb->prefix . 'zonatech_scratch_cards';
+                $card_type = $meta_data['card_type'] ?? '';
+                
+                $card = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM $table_cards WHERE card_type = %s AND status = 'available' LIMIT 1",
+                    $card_type
+                ));
+                
+                if ($card) {
+                    $wpdb->update(
+                        $table_cards,
+                        array(
+                            'status' => 'sold',
+                            'user_id' => $purchase->user_id,
+                            'purchase_id' => $purchase->id,
+                            'sold_at' => current_time('mysql')
+                        ),
+                        array('id' => $card->id)
+                    );
+                }
+                break;
+                
+            case 'nin_slip':
+                // Process NIN slip request
+                $table_nin = $wpdb->prefix . 'zonatech_nin_requests';
+                $wpdb->update(
+                    $table_nin,
+                    array(
+                        'status' => 'paid',
+                        'purchase_id' => $purchase->id
+                    ),
+                    array(
+                        'user_id' => $purchase->user_id,
+                        'nin_number' => $meta_data['nin_number'] ?? '',
+                        'status' => 'pending'
+                    )
+                );
+                break;
+                
+            case 'nin_standard_slip':
+                // Process NIN standard slip request
+                $table_nin = $wpdb->prefix . 'zonatech_nin_requests';
+                $wpdb->update(
+                    $table_nin,
+                    array(
+                        'status' => 'paid',
+                        'purchase_id' => $purchase->id
+                    ),
+                    array(
+                        'user_id' => $purchase->user_id,
+                        'nin_number' => $meta_data['nin_number'] ?? '',
+                        'status' => 'pending'
+                    )
+                );
+                break;
+        }
+    }
+    
+    public function handle_webhook() {
+        // Get and validate input
+        $input = file_get_contents('php://input');
+        
+        if (empty($input)) {
+            $this->log_webhook_error('Empty webhook payload');
+            http_response_code(400);
+            exit('Empty payload');
+        }
+        
+        // Verify webhook signature
+        if (!$this->verify_webhook_signature($input)) {
+            $this->log_webhook_error('Invalid signature', array(
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ));
+            http_response_code(400);
+            exit('Invalid signature');
+        }
+        
+        // Decode and validate JSON
+        $event = json_decode($input, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->log_webhook_error('Invalid JSON', array('error' => json_last_error_msg()));
+            http_response_code(400);
+            exit('Invalid JSON');
+        }
+        
+        // Validate required fields
+        if (!isset($event['event']) || !isset($event['data']['reference'])) {
+            $this->log_webhook_error('Missing required fields', array('event' => $event));
+            http_response_code(400);
+            exit('Missing required fields');
+        }
+        
+        if ($event['event'] === 'charge.success') {
+            $reference = sanitize_text_field($event['data']['reference']);
+            
+            global $wpdb;
+            $table_purchases = $wpdb->prefix . 'zonatech_purchases';
+            
+            $purchase = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $table_purchases WHERE reference = %s AND status = 'pending'",
+                $reference
+            ));
+            
+            if ($purchase) {
+                $wpdb->update(
+                    $table_purchases,
+                    array('status' => 'completed'),
+                    array('reference' => $reference)
+                );
+                
+                $this->process_purchase($purchase);
+                
+                // Log successful webhook
+                if (class_exists('ZonaTech_Activity_Log')) {
+                    ZonaTech_Activity_Log::log(
+                        $purchase->user_id,
+                        'webhook_processed',
+                        'Payment webhook processed successfully',
+                        array('reference' => $reference)
+                    );
+                }
+            }
+        }
+        
+        http_response_code(200);
+        exit('Webhook processed');
+    }
+    
+    private function log_webhook_error($message, $data = array()) {
+        // Log to WordPress error log
+        error_log('ZonaTech Paystack Webhook Error: ' . $message . ' - ' . wp_json_encode($data));
+    }
+    
+    private function verify_webhook_signature($input) {
+        if (!isset($_SERVER['HTTP_X_PAYSTACK_SIGNATURE'])) {
+            $this->log_webhook_error('Missing signature header');
+            return false;
+        }
+        
+        if (empty($this->secret_key)) {
+            $this->log_webhook_error('Secret key not configured');
+            return false;
+        }
+        
+        $signature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'];
+        $computed = hash_hmac('sha512', $input, $this->secret_key);
+        
+        return hash_equals($signature, $computed);
+    }
+    
+    private function get_item_name($payment_type, $meta_data) {
+        switch ($payment_type) {
+            case 'subject':
+                return sprintf(
+                    '%s %s Past Questions',
+                    strtoupper($meta_data['exam_type'] ?? ''),
+                    $meta_data['subject'] ?? ''
+                );
+            case 'scratch_card':
+                return sprintf('%s Scratch Card/PIN', strtoupper($meta_data['card_type'] ?? ''));
+            case 'nin_slip':
+                return 'Premium NIN Slip';
+            case 'nin_standard_slip':
+                return 'Standard NIN Slip';
+            default:
+                return 'ZonaTech Purchase';
+        }
+    }
+    
+    public static function get_user_purchases($user_id, $limit = 10) {
+        global $wpdb;
+        $table_purchases = $wpdb->prefix . 'zonatech_purchases';
+        
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table_purchases WHERE user_id = %d ORDER BY created_at DESC LIMIT %d",
+            $user_id,
+            $limit
+        ));
+    }
+}
+
+// Initialize
+ZonaTech_Paystack::get_instance();
