@@ -232,8 +232,9 @@ class ZonaTech_Past_Questions {
         global $wpdb;
         $table_questions = $wpdb->prefix . 'zonatech_questions';
         
+        // Include correct_answer and explanation for viewing
         $questions = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, question_text, option_a, option_b, option_c, option_d 
+            "SELECT id, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation 
              FROM $table_questions 
              WHERE exam_type = %s AND subject = %s AND year = %d 
              ORDER BY id",

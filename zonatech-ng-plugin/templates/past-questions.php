@@ -433,23 +433,59 @@ jQuery(document).ready(function($) {
         html += '<p class="text-muted mb-2">Total Questions: ' + data.total + '</p>';
         
         if (data.questions && data.questions.length > 0) {
+            // Add quiz button at top
+            html += '<div style="text-align: center; margin-bottom: 1.5rem;">';
+            html += '<button class="btn btn-primary" id="start-quiz-btn" data-exam="' + data.exam_type.toLowerCase() + '" data-subject="' + data.subject + '" data-year="' + data.year + '">';
+            html += '<i class="fas fa-play"></i> Start Practice Quiz';
+            html += '</button>';
+            html += '</div>';
+            
             html += '<div class="questions-list">';
             $.each(data.questions, function(index, question) {
+                var correctAnswer = question.correct_answer ? question.correct_answer.toUpperCase() : '';
+                
                 html += '<div class="question-item glass-effect" style="padding: 1rem; margin-bottom: 1rem; border-radius: 10px;">';
                 html += '<p class="text-white" style="font-weight: 600;"><strong>Q' + (index + 1) + '.</strong> ' + question.question_text + '</p>';
                 html += '<div class="options" style="margin-top: 0.5rem;">';
-                html += '<p class="text-muted"><strong>A.</strong> ' + question.option_a + '</p>';
-                html += '<p class="text-muted"><strong>B.</strong> ' + question.option_b + '</p>';
-                html += '<p class="text-muted"><strong>C.</strong> ' + question.option_c + '</p>';
-                html += '<p class="text-muted"><strong>D.</strong> ' + question.option_d + '</p>';
+                
+                // Display options with correct answer highlighted
+                var options = [
+                    { letter: 'A', text: question.option_a },
+                    { letter: 'B', text: question.option_b },
+                    { letter: 'C', text: question.option_c },
+                    { letter: 'D', text: question.option_d }
+                ];
+                
+                $.each(options, function(i, opt) {
+                    var isCorrect = opt.letter === correctAnswer;
+                    var style = isCorrect ? 'color: #22c55e; font-weight: 600;' : '';
+                    var icon = isCorrect ? ' <i class="fas fa-check" style="color: #22c55e;"></i>' : '';
+                    html += '<p class="text-muted" style="' + style + '"><strong>' + opt.letter + '.</strong> ' + opt.text + icon + '</p>';
+                });
+                
                 html += '</div>';
+                
+                // Show explanation if available
+                if (question.explanation) {
+                    html += '<div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border-left: 3px solid #8b5cf6;">';
+                    html += '<p class="text-muted" style="font-size: 0.9rem; margin: 0;"><i class="fas fa-lightbulb" style="color: #f59e0b;"></i> <strong>Explanation:</strong> ' + question.explanation + '</p>';
+                    html += '</div>';
+                }
+                
+                // Show correct answer badge
+                html += '<div style="margin-top: 0.5rem;">';
+                html += '<span style="display: inline-block; padding: 0.25rem 0.75rem; background: rgba(34, 197, 94, 0.2); color: #22c55e; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">';
+                html += '<i class="fas fa-check-circle"></i> Correct Answer: ' + correctAnswer;
+                html += '</span>';
+                html += '</div>';
+                
                 html += '</div>';
             });
             html += '</div>';
             
-            // Add quiz button
+            // Add quiz button at bottom too
             html += '<div style="text-align: center; margin-top: 1.5rem;">';
-            html += '<button class="btn btn-primary" onclick="startQuiz(\'' + data.exam_type + '\', \'' + data.subject + '\', ' + data.year + ')">';
+            html += '<button class="btn btn-primary" id="start-quiz-btn-bottom" data-exam="' + data.exam_type.toLowerCase() + '" data-subject="' + data.subject + '" data-year="' + data.year + '">';
             html += '<i class="fas fa-play"></i> Start Practice Quiz';
             html += '</button>';
             html += '</div>';
@@ -459,6 +495,20 @@ jQuery(document).ready(function($) {
         
         html += '</div>';
         container.html(html);
+        
+        // Bind quiz button click handlers
+        $('#start-quiz-btn, #start-quiz-btn-bottom').on('click', function() {
+            var examType = $(this).data('exam');
+            var subject = $(this).data('subject');
+            var year = $(this).data('year');
+            
+            if (typeof window.ZonaTechQuiz !== 'undefined') {
+                window.ZonaTechQuiz.startQuiz(examType, subject, year);
+            } else {
+                // Fallback: start quiz directly
+                startQuizDirect(examType, subject, year);
+            }
+        });
     }
     
     // Show payment prompt
@@ -486,10 +536,342 @@ jQuery(document).ready(function($) {
     }
 });
 
-// Start quiz function (global scope)
+// Start quiz function - fallback if ZonaTechQuiz is not loaded
+function startQuizDirect(examType, subject, year) {
+    var container = jQuery('#questions-container');
+    container.html('<div class="loading" style="text-align: center; padding: 3rem;"><div class="spinner" style="border: 3px solid rgba(139, 92, 246, 0.2); border-top-color: #8b5cf6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div><p style="margin-top: 1rem; color: #a1a1aa;">Loading quiz...</p></div>');
+    
+    jQuery.ajax({
+        url: zonatech_ajax.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'zonatech_start_quiz',
+            nonce: zonatech_ajax.nonce,
+            exam_type: examType,
+            subject: subject,
+            year: year
+        },
+        success: function(response) {
+            if (response.success) {
+                renderQuizMode(response.data);
+            } else {
+                container.html('<div class="glass-card text-center" style="padding: 2rem;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i><h3 class="text-white">Error</h3><p class="text-muted">' + (response.data.message || 'Failed to start quiz.') + '</p></div>');
+            }
+        },
+        error: function() {
+            container.html('<div class="glass-card text-center" style="padding: 2rem;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i><h3 class="text-white">Error</h3><p class="text-muted">Failed to start quiz. Please try again.</p></div>');
+        }
+    });
+}
+
+var quizData = null;
+var quizAnswers = {};
+var quizTimer = null;
+var timeRemaining = 0;
+
+function renderQuizMode(data) {
+    quizData = data;
+    quizAnswers = {};
+    timeRemaining = data.time_limit;
+    
+    var container = jQuery('#questions-container');
+    var html = '<div class="quiz-mode">';
+    html += '<div class="glass-card mb-2">';
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">';
+    html += '<div>';
+    html += '<h3 class="text-white" style="margin: 0;"><i class="fas fa-clipboard-check"></i> ' + data.exam_type + ' ' + data.subject + ' Quiz - ' + data.year + '</h3>';
+    html += '<p class="text-muted" style="margin: 0.25rem 0 0;">Questions: ' + data.total + '</p>';
+    html += '</div>';
+    html += '<div class="quiz-timer" style="background: rgba(139, 92, 246, 0.2); padding: 0.75rem 1.5rem; border-radius: 10px; text-align: center;">';
+    html += '<i class="fas fa-clock" style="color: #8b5cf6;"></i> <span id="quiz-timer" style="font-size: 1.5rem; font-weight: 700; color: #fff;">--:--</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    // Progress bar
+    html += '<div class="mb-2" style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 0.75rem;">';
+    html += '<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">';
+    html += '<small class="text-muted">Progress</small>';
+    html += '<small class="text-muted"><span id="answered-count">0</span>/' + data.total + ' answered</small>';
+    html += '</div>';
+    html += '<div style="background: rgba(255,255,255,0.1); border-radius: 5px; height: 8px; overflow: hidden;">';
+    html += '<div id="quiz-progress" style="width: 0%; height: 100%; background: linear-gradient(135deg, #8b5cf6, #7c3aed); transition: width 0.3s;"></div>';
+    html += '</div>';
+    html += '</div>';
+    
+    // Questions
+    html += '<div class="questions-list">';
+    jQuery.each(data.questions, function(index, q) {
+        html += '<div class="question-card glass-effect" data-question-id="' + q.id + '" style="padding: 1.5rem; margin-bottom: 1rem; border-radius: 15px;">';
+        html += '<div style="display: flex; align-items: flex-start; gap: 1rem;">';
+        html += '<span class="question-number" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">' + (index + 1) + '</span>';
+        html += '<p class="question-text text-white" style="margin: 0; font-size: 1rem; line-height: 1.6;">' + q.question_text + '</p>';
+        html += '</div>';
+        html += '<div class="question-options" style="margin-top: 1rem; display: grid; gap: 0.5rem;">';
+        
+        var options = [
+            { letter: 'A', text: q.option_a },
+            { letter: 'B', text: q.option_b },
+            { letter: 'C', text: q.option_c },
+            { letter: 'D', text: q.option_d }
+        ];
+        
+        jQuery.each(options, function(i, opt) {
+            html += '<div class="option-item" data-answer="' + opt.letter + '" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 10px; cursor: pointer; transition: all 0.2s;">';
+            html += '<span class="option-letter" style="background: rgba(139, 92, 246, 0.3); color: #8b5cf6; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">' + opt.letter + '</span>';
+            html += '<span class="option-text text-muted">' + opt.text + '</span>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+    
+    // Submit button
+    html += '<div style="text-align: center; margin-top: 1.5rem;">';
+    html += '<button class="btn btn-primary btn-lg" id="submit-quiz-btn" style="padding: 1rem 3rem;">';
+    html += '<i class="fas fa-check"></i> Submit Quiz';
+    html += '</button>';
+    html += '</div>';
+    html += '</div>';
+    
+    container.html(html);
+    
+    // Start timer
+    startQuizTimer();
+    
+    // Bind option click
+    jQuery('.quiz-mode .option-item').on('click', function() {
+        var questionId = jQuery(this).closest('.question-card').data('question-id');
+        var answer = jQuery(this).data('answer');
+        
+        jQuery(this).closest('.question-options').find('.option-item').css({
+            'border-color': 'transparent',
+            'background': 'rgba(255,255,255,0.05)'
+        });
+        jQuery(this).css({
+            'border-color': '#8b5cf6',
+            'background': 'rgba(139, 92, 246, 0.2)'
+        });
+        
+        quizAnswers[questionId] = answer;
+        updateQuizProgress();
+    });
+    
+    // Bind submit
+    jQuery('#submit-quiz-btn').on('click', function() {
+        if (Object.keys(quizAnswers).length === 0) {
+            if (typeof ZonaTechNotify !== 'undefined') {
+                ZonaTechNotify.show('Please answer at least one question.', 'warning');
+            } else {
+                alert('Please answer at least one question.');
+            }
+            return;
+        }
+        
+        if (confirm('Are you sure you want to submit the quiz?')) {
+            submitQuizAnswers();
+        }
+    });
+}
+
+function startQuizTimer() {
+    quizTimer = setInterval(function() {
+        timeRemaining--;
+        
+        var minutes = Math.floor(timeRemaining / 60);
+        var seconds = timeRemaining % 60;
+        
+        jQuery('#quiz-timer').text(
+            String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0')
+        );
+        
+        if (timeRemaining <= 60) {
+            jQuery('#quiz-timer').css('color', '#ef4444');
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(quizTimer);
+            if (typeof ZonaTechNotify !== 'undefined') {
+                ZonaTechNotify.show('Time is up! Submitting your quiz...', 'warning');
+            }
+            submitQuizAnswers();
+        }
+    }, 1000);
+}
+
+function updateQuizProgress() {
+    var total = quizData.total;
+    var answered = Object.keys(quizAnswers).length;
+    var percent = (answered / total) * 100;
+    
+    jQuery('#quiz-progress').css('width', percent + '%');
+    jQuery('#answered-count').text(answered);
+}
+
+function submitQuizAnswers() {
+    clearInterval(quizTimer);
+    
+    var container = jQuery('#questions-container');
+    container.html('<div class="loading" style="text-align: center; padding: 3rem;"><div class="spinner" style="border: 3px solid rgba(139, 92, 246, 0.2); border-top-color: #8b5cf6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div><p style="margin-top: 1rem; color: #a1a1aa;">Submitting quiz...</p></div>');
+    
+    var timeTaken = quizData.time_limit - timeRemaining;
+    
+    jQuery.ajax({
+        url: zonatech_ajax.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'zonatech_submit_quiz',
+            nonce: zonatech_ajax.nonce,
+            exam_type: quizData.exam_type.toLowerCase(),
+            subject: quizData.subject,
+            year: quizData.year,
+            answers: JSON.stringify(quizAnswers),
+            time_taken: timeTaken
+        },
+        success: function(response) {
+            if (response.success) {
+                showQuizResults(response.data);
+            } else {
+                container.html('<div class="glass-card text-center" style="padding: 2rem;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i><h3 class="text-white">Error</h3><p class="text-muted">' + (response.data.message || 'Failed to submit quiz.') + '</p></div>');
+            }
+        },
+        error: function() {
+            container.html('<div class="glass-card text-center" style="padding: 2rem;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i><h3 class="text-white">Error</h3><p class="text-muted">Failed to submit quiz. Please try again.</p></div>');
+        }
+    });
+}
+
+function showQuizResults(data) {
+    var container = jQuery('#questions-container');
+    var gradeColor = data.score >= 50 ? '#22c55e' : '#ef4444';
+    
+    var html = '<div class="glass-card text-center" style="padding: 2rem;">';
+    html += '<div style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, ' + gradeColor + '40, ' + gradeColor + '20); display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">';
+    html += '<span style="font-size: 2.5rem; font-weight: 700; color: ' + gradeColor + ';">' + data.score + '%</span>';
+    html += '<span style="color: #a1a1aa; font-size: 0.9rem;">Score</span>';
+    html += '</div>';
+    
+    html += '<h2 class="text-white" style="margin: 0 0 0.5rem;">Grade: ' + data.grade + '</h2>';
+    html += '<p class="text-muted">' + data.message + '</p>';
+    
+    html += '<div style="display: flex; justify-content: center; gap: 2rem; margin: 1.5rem 0;">';
+    html += '<div style="text-align: center;">';
+    html += '<div style="font-size: 2rem; font-weight: 700; color: #22c55e;">' + data.correct + '</div>';
+    html += '<div style="color: #a1a1aa; font-size: 0.85rem;">Correct</div>';
+    html += '</div>';
+    html += '<div style="text-align: center;">';
+    html += '<div style="font-size: 2rem; font-weight: 700; color: #ef4444;">' + data.wrong + '</div>';
+    html += '<div style="color: #a1a1aa; font-size: 0.85rem;">Wrong</div>';
+    html += '</div>';
+    html += '<div style="text-align: center;">';
+    html += '<div style="font-size: 2rem; font-weight: 700; color: #8b5cf6;">' + data.total + '</div>';
+    html += '<div style="color: #a1a1aa; font-size: 0.85rem;">Total</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '<div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">';
+    html += '<button class="btn btn-primary" id="view-corrections-btn" data-result-id="' + data.result_id + '">';
+    html += '<i class="fas fa-eye"></i> View Corrections';
+    html += '</button>';
+    html += '<a href="' + window.location.href + '" class="btn btn-secondary">';
+    html += '<i class="fas fa-redo"></i> Try Again';
+    html += '</a>';
+    html += '</div>';
+    html += '</div>';
+    
+    container.html(html);
+    
+    // Bind view corrections button
+    jQuery('#view-corrections-btn').on('click', function() {
+        var resultId = jQuery(this).data('result-id');
+        viewQuizCorrections(resultId);
+    });
+}
+
+function viewQuizCorrections(resultId) {
+    var container = jQuery('#questions-container');
+    container.html('<div class="loading" style="text-align: center; padding: 3rem;"><div class="spinner" style="border: 3px solid rgba(139, 92, 246, 0.2); border-top-color: #8b5cf6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div><p style="margin-top: 1rem; color: #a1a1aa;">Loading corrections...</p></div>');
+    
+    jQuery.ajax({
+        url: zonatech_ajax.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'zonatech_get_corrections',
+            nonce: zonatech_ajax.nonce,
+            result_id: resultId
+        },
+        success: function(response) {
+            if (response.success) {
+                if (response.data.corrections.length === 0) {
+                    container.html('<div class="glass-card text-center" style="padding: 3rem;"><i class="fas fa-trophy" style="font-size: 3rem; color: #22c55e; margin-bottom: 1rem;"></i><h3 class="text-white">Perfect Score!</h3><p class="text-muted">' + response.data.message + '</p><a href="' + window.location.href + '" class="btn btn-primary mt-2"><i class="fas fa-redo"></i> Take Another Quiz</a></div>');
+                    return;
+                }
+                
+                var html = '<div class="glass-card mb-2"><h3 class="text-white"><i class="fas fa-check-double"></i> Corrections</h3><p class="text-muted">Review the questions you got wrong</p></div>';
+                html += '<div class="corrections-list">';
+                
+                jQuery.each(response.data.corrections, function(index, c) {
+                    html += '<div class="question-card glass-effect" style="padding: 1.5rem; margin-bottom: 1rem; border-radius: 15px;">';
+                    html += '<div style="display: flex; align-items: flex-start; gap: 1rem;">';
+                    html += '<span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">' + (index + 1) + '</span>';
+                    html += '<p class="text-white" style="margin: 0;">' + c.question + '</p>';
+                    html += '</div>';
+                    html += '<div style="margin-top: 1rem; display: grid; gap: 0.5rem;">';
+                    
+                    var letters = ['A', 'B', 'C', 'D'];
+                    jQuery.each(letters, function(i, letter) {
+                        var isCorrect = letter === c.correct_answer;
+                        var isUserAnswer = letter === c.your_answer;
+                        var bgColor = 'rgba(255,255,255,0.05)';
+                        var borderColor = 'transparent';
+                        var icon = '';
+                        
+                        if (isCorrect) {
+                            bgColor = 'rgba(34, 197, 94, 0.2)';
+                            borderColor = '#22c55e';
+                            icon = ' <i class="fas fa-check" style="color: #22c55e; margin-left: auto;"></i>';
+                        } else if (isUserAnswer) {
+                            bgColor = 'rgba(239, 68, 68, 0.2)';
+                            borderColor = '#ef4444';
+                            icon = ' <i class="fas fa-times" style="color: #ef4444; margin-left: auto;"></i>';
+                        }
+                        
+                        html += '<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: ' + bgColor + '; border: 2px solid ' + borderColor + '; border-radius: 10px;">';
+                        html += '<span style="background: rgba(139, 92, 246, 0.3); color: #8b5cf6; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">' + letter + '</span>';
+                        html += '<span class="text-muted">' + c.options[letter] + '</span>';
+                        html += icon;
+                        html += '</div>';
+                    });
+                    
+                    if (c.explanation) {
+                        html += '<div style="margin-top: 1rem; padding: 1rem; background: rgba(139, 92, 246, 0.1); border-radius: 10px; border-left: 3px solid #8b5cf6;">';
+                        html += '<p style="margin: 0; color: #a1a1aa;"><i class="fas fa-lightbulb" style="color: #f59e0b;"></i> <strong>Explanation:</strong> ' + c.explanation + '</p>';
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+                html += '<div style="text-align: center; margin-top: 1.5rem;"><a href="' + window.location.href + '" class="btn btn-primary"><i class="fas fa-redo"></i> Try Again</a></div>';
+                
+                container.html(html);
+            } else {
+                container.html('<div class="glass-card text-center" style="padding: 2rem;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i><h3 class="text-white">Error</h3><p class="text-muted">' + (response.data.message || 'Failed to load corrections.') + '</p></div>');
+            }
+        },
+        error: function() {
+            container.html('<div class="glass-card text-center" style="padding: 2rem;"><i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i><h3 class="text-white">Error</h3><p class="text-muted">Failed to load corrections. Please try again.</p></div>');
+        }
+    });
+}
+
+// Legacy startQuiz function (global scope)
 function startQuiz(examType, subject, year) {
-    alert('Starting quiz for ' + examType + ' ' + subject + ' ' + year);
-    // TODO: Implement quiz functionality
+    startQuizDirect(examType, subject, year);
 }
 
 // Purchase subject function (global scope)
