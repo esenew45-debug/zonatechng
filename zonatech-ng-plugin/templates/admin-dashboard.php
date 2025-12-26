@@ -1865,12 +1865,23 @@ $current_user = wp_get_current_user();
                 <h3 style="font-size: 16px; margin-bottom: 15px; color: #ffffff;"><i class="fas fa-credit-card" style="color: #8b5cf6;"></i> Paystack Configuration</h3>
                 
                 <?php 
+                // Get current keys
                 $current_public_key = get_option('zonatech_paystack_public_key', '');
                 $current_secret_key = get_option('zonatech_paystack_secret_key', '');
-                $is_test_mode = !empty($current_public_key) && strpos($current_public_key, 'pk_test_') === 0;
+                
+                // Get saved test and live keys separately
+                $test_public_key = get_option('zonatech_paystack_test_public_key', '');
+                $test_secret_key = get_option('zonatech_paystack_test_secret_key', '');
+                $live_public_key = get_option('zonatech_paystack_live_public_key', '');
+                $live_secret_key = get_option('zonatech_paystack_live_secret_key', '');
+                
+                // Determine current mode
+                $current_mode = get_option('zonatech_paystack_mode', 'test'); // 'test' or 'live'
+                $is_test_mode = $current_mode === 'test';
                 $is_configured = !empty($current_public_key) && !empty($current_secret_key);
                 ?>
                 
+                <!-- Current Status -->
                 <div style="padding: 15px; background: <?php echo $is_configured ? ($is_test_mode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)') : 'rgba(245, 158, 11, 0.1)'; ?>; border: 1px solid <?php echo $is_configured ? ($is_test_mode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)') : 'rgba(245, 158, 11, 0.3)'; ?>; border-radius: 10px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <i class="fas <?php echo $is_configured ? ($is_test_mode ? 'fa-flask' : 'fa-check-circle') : 'fa-exclamation-triangle'; ?>" style="color: <?php echo $is_configured ? ($is_test_mode ? '#3b82f6' : '#10b981') : '#f59e0b'; ?>; font-size: 20px;"></i>
@@ -1889,42 +1900,89 @@ $current_user = wp_get_current_user();
                     </div>
                 </div>
                 
-                <form id="paystack-settings-form" method="post">
-                    <div class="admin-form-group">
-                        <label><i class="fas fa-key"></i> Public Key</label>
-                        <input type="text" name="paystack_public_key" id="paystack_public_key" 
-                               value="<?php echo esc_attr($current_public_key); ?>" 
-                               placeholder="pk_test_xxxxx or pk_live_xxxxx"
-                               style="font-family: monospace;">
-                        <small style="color: rgba(255,255,255,0.5); font-size: 11px;">Starts with pk_test_ (test) or pk_live_ (live)</small>
-                    </div>
-                    
-                    <div class="admin-form-group">
-                        <label><i class="fas fa-lock"></i> Secret Key</label>
-                        <input type="password" name="paystack_secret_key" id="paystack_secret_key" 
-                               value="<?php echo esc_attr($current_secret_key); ?>" 
-                               placeholder="sk_test_xxxxx or sk_live_xxxxx"
-                               style="font-family: monospace;">
-                        <small style="color: rgba(255,255,255,0.5); font-size: 11px;">Starts with sk_test_ (test) or sk_live_ (live) - Keep this secret!</small>
-                    </div>
-                    
-                    <button type="submit" class="admin-form-submit" style="margin-top: 15px;">
-                        <i class="fas fa-save"></i> Save Paystack Keys
+                <!-- Mode Selector -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button type="button" id="select-test-mode" class="admin-tab <?php echo $is_test_mode ? 'active' : ''; ?>" style="flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; background: <?php echo $is_test_mode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.05)'; ?>; border: 1px solid <?php echo $is_test_mode ? 'rgba(59, 130, 246, 0.5)' : 'rgba(255,255,255,0.1)'; ?>; color: #fff;">
+                        <i class="fas fa-flask"></i> Test Mode
                     </button>
-                </form>
+                    <button type="button" id="select-live-mode" class="admin-tab <?php echo !$is_test_mode ? 'active' : ''; ?>" style="flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; background: <?php echo !$is_test_mode ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.05)'; ?>; border: 1px solid <?php echo !$is_test_mode ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.1)'; ?>; color: #fff;">
+                        <i class="fas fa-rocket"></i> Live Mode
+                    </button>
+                </div>
                 
-                <div style="margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 10px;">
-                    <h4 style="color: #3b82f6; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-info-circle"></i> How to get your Paystack Test Keys</h4>
+                <!-- Test Keys Section -->
+                <div id="test-keys-section" style="display: <?php echo $is_test_mode ? 'block' : 'none'; ?>; padding: 20px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="color: #3b82f6; margin-bottom: 15px; font-size: 14px;"><i class="fas fa-flask"></i> Test Keys (For Testing)</h4>
+                    <form id="test-keys-form" method="post">
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label style="color: rgba(255,255,255,0.8);"><i class="fas fa-key"></i> Test Public Key</label>
+                            <input type="text" name="test_public_key" id="test_public_key" 
+                                   value="<?php echo esc_attr($test_public_key); ?>" 
+                                   placeholder="Enter your test public key here"
+                                   style="font-family: monospace; width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; color: #fff;">
+                        </div>
+                        
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label style="color: rgba(255,255,255,0.8);"><i class="fas fa-lock"></i> Test Secret Key</label>
+                            <input type="password" name="test_secret_key" id="test_secret_key" 
+                                   value="<?php echo esc_attr($test_secret_key); ?>" 
+                                   placeholder="Enter your test secret key here"
+                                   style="font-family: monospace; width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; color: #fff;">
+                        </div>
+                        
+                        <button type="submit" class="admin-form-submit" style="background: linear-gradient(135deg, #3b82f6, #2563eb); width: 100%;">
+                            <i class="fas fa-save"></i> Save & Activate Test Keys
+                        </button>
+                    </form>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0;">
+                            <i class="fas fa-info-circle"></i> <strong>Test Card:</strong> <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;"><?php echo defined('ZONATECH_PAYSTACK_TEST_CARD') ? ZONATECH_PAYSTACK_TEST_CARD : '4084 0840 8408 4081'; ?></code> | Expiry: Any future date | CVV: Any 3 digits
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Live Keys Section -->
+                <div id="live-keys-section" style="display: <?php echo !$is_test_mode ? 'block' : 'none'; ?>; padding: 20px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="color: #10b981; margin-bottom: 15px; font-size: 14px;"><i class="fas fa-rocket"></i> Live Keys (For Production)</h4>
+                    <form id="live-keys-form" method="post">
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label style="color: rgba(255,255,255,0.8);"><i class="fas fa-key"></i> Live Public Key</label>
+                            <input type="text" name="live_public_key" id="live_public_key" 
+                                   value="<?php echo esc_attr($live_public_key); ?>" 
+                                   placeholder="Enter your live public key here"
+                                   style="font-family: monospace; width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; color: #fff;">
+                        </div>
+                        
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label style="color: rgba(255,255,255,0.8);"><i class="fas fa-lock"></i> Live Secret Key</label>
+                            <input type="password" name="live_secret_key" id="live_secret_key" 
+                                   value="<?php echo esc_attr($live_secret_key); ?>" 
+                                   placeholder="Enter your live secret key here"
+                                   style="font-family: monospace; width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; color: #fff;">
+                        </div>
+                        
+                        <button type="submit" class="admin-form-submit" style="background: linear-gradient(135deg, #10b981, #059669); width: 100%;">
+                            <i class="fas fa-save"></i> Save & Activate Live Keys
+                        </button>
+                    </form>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px;">
+                        <p style="font-size: 12px; color: #ef4444; margin: 0;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> Live keys process real payments. Only use when you're ready for production!
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- How to get keys -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 10px;">
+                    <h4 style="color: #a78bfa; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-info-circle"></i> How to get your Paystack API Keys</h4>
                     <ol style="font-size: 13px; color: rgba(255,255,255,0.7); padding-left: 20px; margin: 0;">
                         <li><strong>Create a Paystack Account:</strong> <a href="https://paystack.com/signup" target="_blank" style="color: #8b5cf6;">Sign up at paystack.com</a> (Free)</li>
                         <li><strong>Go to Settings:</strong> <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" style="color: #8b5cf6;">Settings → API Keys & Webhooks</a></li>
-                        <li><strong>Copy Test Keys:</strong> Copy your <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">pk_test_xxx</code> and <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">sk_test_xxx</code> keys</li>
-                        <li><strong>Paste above:</strong> Enter them in the form fields above and save</li>
-                        <li><strong>Test Payment:</strong> Use test card: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;"><?php echo defined('ZONATECH_PAYSTACK_TEST_CARD') ? ZONATECH_PAYSTACK_TEST_CARD : '4084 0840 8408 4081'; ?></code>, any future expiry, any CVV</li>
+                        <li><strong>Copy your keys:</strong> You'll see both Test and Live keys on the same page</li>
+                        <li><strong>Enter keys above:</strong> Paste Test keys in Test section, Live keys in Live section</li>
                     </ol>
-                    <p style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5);">
-                        <i class="fas fa-lightbulb"></i> Test keys allow you to test payments without real charges. Switch to Live keys when ready for production.
-                    </p>
                 </div>
             </div>
             
@@ -1949,30 +2007,88 @@ $current_user = wp_get_current_user();
     </div>
     
     <script>
-        // Handle Paystack settings form submission
-        document.getElementById('paystack-settings-form')?.addEventListener('submit', function(e) {
+        // Mode switching
+        document.getElementById('select-test-mode')?.addEventListener('click', function() {
+            document.getElementById('test-keys-section').style.display = 'block';
+            document.getElementById('live-keys-section').style.display = 'none';
+            this.style.background = 'rgba(59, 130, 246, 0.3)';
+            this.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+            document.getElementById('select-live-mode').style.background = 'rgba(255,255,255,0.05)';
+            document.getElementById('select-live-mode').style.borderColor = 'rgba(255,255,255,0.1)';
+        });
+        
+        document.getElementById('select-live-mode')?.addEventListener('click', function() {
+            document.getElementById('test-keys-section').style.display = 'none';
+            document.getElementById('live-keys-section').style.display = 'block';
+            this.style.background = 'rgba(16, 185, 129, 0.3)';
+            this.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+            document.getElementById('select-test-mode').style.background = 'rgba(255,255,255,0.05)';
+            document.getElementById('select-test-mode').style.borderColor = 'rgba(255,255,255,0.1)';
+        });
+        
+        // Handle Test Keys form submission
+        document.getElementById('test-keys-form')?.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            var publicKey = document.getElementById('paystack_public_key').value.trim();
-            var secretKey = document.getElementById('paystack_secret_key').value.trim();
+            var publicKey = document.getElementById('test_public_key').value.trim();
+            var secretKey = document.getElementById('test_secret_key').value.trim();
             
             // Validate key formats
-            if (publicKey && !publicKey.match(/^pk_(test|live)_/)) {
-                alert('Invalid Public Key format. It should start with pk_test_ or pk_live_');
+            if (publicKey && !publicKey.match(/^pk_test_/)) {
+                alert('Invalid Test Public Key format. It should start with pk_test_');
                 return;
             }
             
-            if (secretKey && !secretKey.match(/^sk_(test|live)_/)) {
-                alert('Invalid Secret Key format. It should start with sk_test_ or sk_live_');
+            if (secretKey && !secretKey.match(/^sk_test_/)) {
+                alert('Invalid Test Secret Key format. It should start with sk_test_');
                 return;
             }
             
-            // Submit via AJAX
+            if (!publicKey || !secretKey) {
+                alert('Please enter both Public Key and Secret Key');
+                return;
+            }
+            
+            savePaystackKeys(publicKey, secretKey, 'test');
+        });
+        
+        // Handle Live Keys form submission
+        document.getElementById('live-keys-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var publicKey = document.getElementById('live_public_key').value.trim();
+            var secretKey = document.getElementById('live_secret_key').value.trim();
+            
+            // Validate key formats
+            if (publicKey && !publicKey.match(/^pk_live_/)) {
+                alert('Invalid Live Public Key format. It should start with pk_live_');
+                return;
+            }
+            
+            if (secretKey && !secretKey.match(/^sk_live_/)) {
+                alert('Invalid Live Secret Key format. It should start with sk_live_');
+                return;
+            }
+            
+            if (!publicKey || !secretKey) {
+                alert('Please enter both Public Key and Secret Key');
+                return;
+            }
+            
+            if (!confirm('Warning: You are about to activate LIVE mode. Real payments will be processed. Continue?')) {
+                return;
+            }
+            
+            savePaystackKeys(publicKey, secretKey, 'live');
+        });
+        
+        function savePaystackKeys(publicKey, secretKey, mode) {
             var formData = new FormData();
             formData.append('action', 'zonatech_save_paystack_keys');
             formData.append('nonce', '<?php echo wp_create_nonce('zonatech_save_paystack'); ?>');
             formData.append('public_key', publicKey);
             formData.append('secret_key', secretKey);
+            formData.append('mode', mode);
             
             fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                 method: 'POST',
@@ -1981,7 +2097,7 @@ $current_user = wp_get_current_user();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Paystack keys saved successfully! Please refresh the page.');
+                    alert('Paystack ' + mode.toUpperCase() + ' keys saved and activated successfully!');
                     window.location.reload();
                 } else {
                     alert(data.data.message || 'Failed to save keys.');
@@ -1990,7 +2106,7 @@ $current_user = wp_get_current_user();
             .catch(error => {
                 alert('An error occurred. Please try again.');
             });
-        });
+        }
         
         function toggleSidebar() {
             document.getElementById('adminSidebar').classList.toggle('open');

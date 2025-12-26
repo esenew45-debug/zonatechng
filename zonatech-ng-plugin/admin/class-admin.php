@@ -197,31 +197,51 @@ class ZonaTech_Admin {
         
         $public_key = sanitize_text_field($_POST['public_key'] ?? '');
         $secret_key = sanitize_text_field($_POST['secret_key'] ?? '');
+        $mode = sanitize_text_field($_POST['mode'] ?? 'test'); // 'test' or 'live'
         
-        // Validate public key format if not empty
-        if (!empty($public_key) && !preg_match('/^pk_(test|live)_/', $public_key)) {
-            wp_send_json_error(array('message' => 'Invalid public key format. It should start with pk_test_ or pk_live_'));
+        // Validate mode
+        if (!in_array($mode, array('test', 'live'))) {
+            $mode = 'test';
         }
         
-        // Validate secret key format if not empty
-        if (!empty($secret_key) && !preg_match('/^sk_(test|live)_/', $secret_key)) {
-            wp_send_json_error(array('message' => 'Invalid secret key format. It should start with sk_test_ or sk_live_'));
+        // Validate public key format based on mode
+        if ($mode === 'test') {
+            if (!empty($public_key) && !preg_match('/^pk_test_/', $public_key)) {
+                wp_send_json_error(array('message' => 'Invalid test public key format. It should start with pk_test_'));
+            }
+            if (!empty($secret_key) && !preg_match('/^sk_test_/', $secret_key)) {
+                wp_send_json_error(array('message' => 'Invalid test secret key format. It should start with sk_test_'));
+            }
+            // Save test keys separately
+            update_option('zonatech_paystack_test_public_key', $public_key);
+            update_option('zonatech_paystack_test_secret_key', $secret_key);
+        } else {
+            if (!empty($public_key) && !preg_match('/^pk_live_/', $public_key)) {
+                wp_send_json_error(array('message' => 'Invalid live public key format. It should start with pk_live_'));
+            }
+            if (!empty($secret_key) && !preg_match('/^sk_live_/', $secret_key)) {
+                wp_send_json_error(array('message' => 'Invalid live secret key format. It should start with sk_live_'));
+            }
+            // Save live keys separately
+            update_option('zonatech_paystack_live_public_key', $public_key);
+            update_option('zonatech_paystack_live_secret_key', $secret_key);
         }
         
-        // Save the keys
+        // Set active keys and mode
         update_option('zonatech_paystack_public_key', $public_key);
         update_option('zonatech_paystack_secret_key', $secret_key);
+        update_option('zonatech_paystack_mode', $mode);
         
         // Log the action
         if (class_exists('ZonaTech_Activity_Log')) {
             ZonaTech_Activity_Log::log(
                 get_current_user_id(),
                 'settings_update',
-                'Paystack API keys updated',
-                array('test_mode' => strpos($public_key, 'pk_test_') === 0)
+                'Paystack API keys updated (' . strtoupper($mode) . ' mode)',
+                array('mode' => $mode)
             );
         }
         
-        wp_send_json_success(array('message' => 'Paystack keys saved successfully!'));
+        wp_send_json_success(array('message' => 'Paystack ' . strtoupper($mode) . ' keys saved and activated successfully!'));
     }
 }
