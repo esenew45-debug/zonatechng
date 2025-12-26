@@ -57,7 +57,8 @@ define('ZONATECH_SUBJECT_PRICE', 5000);
 define('ZONATECH_NIN_SLIP_PRICE', 2000);          // Premium NIN Slip
 define('ZONATECH_NIN_STANDARD_SLIP_PRICE', 1000); // Standard NIN Slip
 define('ZONATECH_SCRATCH_CARD_PRICE', 5000);
-define('ZONATECH_OTAPAY_CARD_PRICE', 4000);       // OtaPay WAEC/NECO Cards price
+define('ZONATECH_WAEC_CARD_PRICE', 3850);         // OtaPay WAEC Cards price
+define('ZONATECH_NECO_CARD_PRICE', 2500);         // OtaPay NECO Cards price
 
 // Session timeout (3 days in seconds)
 define('ZONATECH_SESSION_TIMEOUT', 3 * DAY_IN_SECONDS);

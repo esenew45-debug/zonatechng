@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 class ZonaTech_OtaPay {
     
     private static $instance = null;
-    private $api_base_url = 'https://otapay.ng/api';
+    private $api_base_url = 'https://app.otapay.ng/api';
     private $api_key = '';
     
     public static function get_instance() {
@@ -127,24 +127,33 @@ class ZonaTech_OtaPay {
             sprintf('Attempting to purchase %s scratch card via OtaPay', strtoupper($card_type))
         );
         
-        // Map card type to OtaPay product code
-        $product_code = $this->get_product_code($card_type);
+        // Map card type to OtaPay provider code
+        $provider_code = $this->get_provider_code($card_type);
         
-        // Make the purchase request to OtaPay
+        // Generate unique reference
+        $unique_ref = 'ZT' . time() . $user_id . rand(100, 999);
+        
+        // Make the purchase request to OtaPay using their exact API format
+        // Endpoint: https://app.otapay.ng/api/exampin/
+        // Payload: {"provider":"1", "quantity":"1","ref":"unique_ref"}
         $purchase_data = array(
-            'product' => $product_code,
-            'quantity' => 1,
-            'reference' => $reference ?: 'ZT-' . time() . '-' . $user_id
+            'provider' => $provider_code,
+            'quantity' => '1',
+            'ref' => $reference ?: $unique_ref
         );
         
-        $response = $this->make_request('/purchase', $purchase_data);
+        $response = $this->make_request('/exampin/', $purchase_data);
         
-        if (!$response || !isset($response['success'])) {
+        if (!$response || !isset($response['status'])) {
             wp_send_json_error(array('message' => 'Unable to connect to scratch card provider. Please try again.'));
         }
         
-        if (!$response['success']) {
-            $error_message = $response['message'] ?? 'Purchase failed. Please try again.';
+        // Check for success - OtaPay returns {"status": "success", "Status":"successful",...}
+        $is_success = (isset($response['status']) && strtolower($response['status']) === 'success') ||
+                      (isset($response['Status']) && strtolower($response['Status']) === 'successful');
+        
+        if (!$is_success) {
+            $error_message = $response['msg'] ?? $response['message'] ?? 'Purchase failed. Please try again.';
             
             ZonaTech_Activity_Log::log(
                 $user_id,
@@ -155,9 +164,10 @@ class ZonaTech_OtaPay {
             wp_send_json_error(array('message' => $error_message));
         }
         
-        // Extract PIN and serial from response
-        $pin = $response['data']['pin'] ?? $response['pin'] ?? '';
-        $serial = $response['data']['serial'] ?? $response['serial'] ?? '';
+        // Extract PIN from response - OtaPay returns pins in multiple fields
+        // Response format: {"status": "success","msg":"123456","pin":"123456","pins":"123456","token":"123456"}
+        $pin = $response['pin'] ?? $response['pins'] ?? $response['token'] ?? $response['msg'] ?? '';
+        $serial = ''; // OtaPay doesn't return serial separately
         
         if (empty($pin)) {
             wp_send_json_error(array('message' => 'No PIN received from provider. Please contact support.'));
@@ -204,17 +214,18 @@ class ZonaTech_OtaPay {
     }
     
     /**
-     * Get OtaPay product code for card type
+     * Get OtaPay provider code for card type
+     * Based on OtaPay API: provider "1" for WAEC, "2" for NECO (may need adjustment)
      */
-    private function get_product_code($card_type) {
-        // Based on OtaPay API documentation
-        // These codes may need to be adjusted based on actual API docs
+    private function get_provider_code($card_type) {
+        // OtaPay uses numeric provider codes
+        // These codes should match the OtaPay documentation
         $codes = array(
-            'waec' => 'WAEC_RESULT_CHECKER',
-            'neco' => 'NECO_RESULT_CHECKER'
+            'waec' => '1',   // WAEC Result Checker
+            'neco' => '2'    // NECO Result Checker
         );
         
-        return $codes[strtolower($card_type)] ?? $card_type;
+        return $codes[strtolower($card_type)] ?? '1';
     }
     
     /**
@@ -390,7 +401,7 @@ class ZonaTech_OtaPay {
                 'name' => 'WAEC',
                 'full_name' => 'WAEC Result Checker PIN',
                 'description' => 'Check your WAEC SSCE/GCE result instantly',
-                'price' => ZONATECH_OTAPAY_CARD_PRICE,
+                'price' => ZONATECH_WAEC_CARD_PRICE,
                 'icon' => 'fas fa-credit-card',
                 'color' => '#22c55e',
                 'provider' => 'otapay'
@@ -399,7 +410,7 @@ class ZonaTech_OtaPay {
                 'name' => 'NECO',
                 'full_name' => 'NECO Result Checker PIN',
                 'description' => 'Check your NECO SSCE/GCE result instantly',
-                'price' => ZONATECH_OTAPAY_CARD_PRICE,
+                'price' => ZONATECH_NECO_CARD_PRICE,
                 'icon' => 'fas fa-id-card',
                 'color' => '#f59e0b',
                 'provider' => 'otapay'
