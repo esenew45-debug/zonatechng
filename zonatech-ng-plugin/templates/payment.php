@@ -194,14 +194,14 @@ switch ($payment_type) {
                                                 success: function(verifyResponse) {
                                                     if (verifyResponse.success) {
                                                         if (typeof ZonaTechNotify !== 'undefined') {
-                                                            ZonaTechNotify.show('Payment successful! Redirecting...', 'success');
+                                                            ZonaTechNotify.show('Payment successful! Redirecting to your subjects...', 'success');
                                                         } else {
                                                             alert('Payment successful!');
                                                         }
                                                         
-                                                        // Redirect back to questions page
+                                                        // Redirect to dashboard My Subjects section
                                                         setTimeout(function() {
-                                                            window.location.href = '<?php echo esc_js($redirect_url); ?>?payment=success&exam=<?php echo esc_js($exam_type); ?>&subject=<?php echo esc_js(urlencode($subject)); ?>';
+                                                            window.location.href = '<?php echo site_url('/zonatech-dashboard/'); ?>?payment=success#overview';
                                                         }, 1500);
                                                     } else {
                                                         $btn.html(originalText).prop('disabled', false);

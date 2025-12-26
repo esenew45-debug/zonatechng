@@ -4,9 +4,35 @@ if (!defined('ABSPATH')) exit;
 global $wpdb;
 $table_questions = $wpdb->prefix . 'zonatech_questions';
 
+// Ensure table exists
+$table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_questions'");
+if (!$table_exists) {
+    $charset_collate = $wpdb->get_charset_collate();
+    $sql = "CREATE TABLE $table_questions (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        exam_type varchar(20) NOT NULL,
+        subject varchar(100) NOT NULL,
+        year int(4) NOT NULL,
+        question_text longtext NOT NULL,
+        option_a text NOT NULL,
+        option_b text NOT NULL,
+        option_c text NOT NULL,
+        option_d text NOT NULL,
+        correct_answer char(1) NOT NULL,
+        explanation longtext,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY exam_type (exam_type),
+        KEY subject (subject),
+        KEY year (year)
+    ) $charset_collate;";
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+
 // Handle form submission
 if (isset($_POST['zonatech_add_question']) && wp_verify_nonce($_POST['_wpnonce'], 'zonatech_add_question')) {
-    $wpdb->insert($table_questions, array(
+    $insert_result = $wpdb->insert($table_questions, array(
         'exam_type' => sanitize_text_field($_POST['exam_type']),
         'subject' => sanitize_text_field($_POST['subject']),
         'year' => intval($_POST['year']),
@@ -18,7 +44,12 @@ if (isset($_POST['zonatech_add_question']) && wp_verify_nonce($_POST['_wpnonce']
         'correct_answer' => sanitize_text_field($_POST['correct_answer']),
         'explanation' => sanitize_textarea_field($_POST['explanation'])
     ));
-    echo '<div class="notice notice-success"><p>Question added successfully!</p></div>';
+    
+    if ($insert_result !== false) {
+        echo '<div class="notice notice-success"><p>Question added successfully! (ID: ' . $wpdb->insert_id . ')</p></div>';
+    } else {
+        echo '<div class="notice notice-error"><p>Failed to add question. Error: ' . esc_html($wpdb->last_error) . '</p></div>';
+    }
 }
 
 // Get questions count by exam type
